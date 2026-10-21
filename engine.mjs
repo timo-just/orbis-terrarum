@@ -36,7 +36,7 @@ export function legal(s,a) {
   if(a.kind==='barracks')return !p.barracks&&p.soldier>=10;
   if(a.kind==='flag')return s.flags[s.player]>=0&&s.flags[s.player]!==a.source&&p.soldier>=10;
   if(a.kind==='tower'||a.kind==='demolishTower')return s.corners[a.target]?.includes(a.source)&&
-    (a.kind==='tower'?!s.towers.some(t=>t.corner===a.target)&&p.soldier>=5:s.towers.some(t=>t.corner===a.target&&t.province===a.source));
+    (a.kind==='tower'?!s.towers.some(t=>t.corner===a.target&&t.province===a.source)&&p.soldier>=5:s.towers.some(t=>t.corner===a.target&&t.province===a.source));
   if(a.kind==='wall'||a.kind==='demolishWall')return s.links[a.source].some(l=>l.target===a.target)&&
     (a.kind==='wall'?!s.walls.includes(wallKey(a.source,a.target))&&p.soldier>=5:s.walls.includes(wallKey(a.source,a.target)));
   return a.kind==='move'&&TYPES.includes(a.type)&&s.p[a.target]&&Number.isInteger(a.amount)&&a.amount>0&&a.amount<=available(p,a.type)&&
@@ -53,7 +53,7 @@ export function shots(s,player) {
   function hit(source,target,tower=null){const type=TYPES.find(t=>remaining[target][t]>0);remaining[target][type]--;out.push({source,target,type,tower,arrow:tower===null});}
   [...s.towers].sort((a,b)=>a.corner-b.corner||a.province-b.province).forEach(t=>{
     if(s.p[t.province].owner!==player)return;
-    const waiting=s.cooldown[t.corner];if(waiting&&waiting!==player&&active(s,waiting))return;
+    const waiting=s.cooldown[`${t.province}:${t.corner}`]??s.cooldown[t.corner];if(waiting&&waiting!==player&&active(s,waiting))return;
     const target=[...s.corners[t.corner]].sort((a,b)=>a-b).find(enemy);if(target!==undefined)hit(t.province,target,t.corner);
   });
   s.p.forEach((p,id)=>{if(p.owner!==player)return;for(let i=0;i<p.archer;i++){
@@ -69,7 +69,7 @@ export function apply(s,a) {
     n.player=next;n.turns++;n.pool=0;n.drawn=n.turns>=150*n.players;
     n.p.forEach(p=>{if(p.owner===next){if(n.turns>=n.players)n.pool+=p.barracks?2:1;for(const k of ['arrived','soldierTwice','horseOnce','horseExhausted','archerArrived','archerTwice'])p[k]=0;}});
     for(const corner of Object.keys(n.cooldown))if(n.cooldown[corner]===next||!active(s,n.cooldown[corner]))delete n.cooldown[corner];
-    n.lastShots=shots(s,next);n.lastShots.forEach(shot=>{remove(n.p[shot.target],shot.type,1);if(shot.tower!==null)n.cooldown[shot.tower]=s.p[shot.target].owner;});return n;
+    n.lastShots=shots(s,next);n.lastShots.forEach(shot=>{remove(n.p[shot.target],shot.type,1);if(shot.tower!==null)n.cooldown[`${shot.source}:${shot.tower}`]=s.p[shot.target].owner;});return n;
   }
   if(a.kind==='convert'){
     const [from,to,cost,produced]=({horse:['soldier','horse',3,1],archer:['soldier','archer',10,1],footHorse:['horse','soldier',1,2],footArcher:['archer','soldier',1,5]})[a.conversion];

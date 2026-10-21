@@ -2,7 +2,7 @@
 
 Ein rundenbasiertes Gebietseroberungsspiel für **ein bis sechs Menschen an einem Bildschirm**. Die Browser-Version enthält keine KI, kein Training und keine Bewertungsleiste. Ein Spieler ist ein Übungsmodus.
 
-Die Dateien sind vollständig statisch: kein Build, kein Konto, kein API-Schlüssel, keine externen Schriftarten, keine CDN-Abhängigkeiten und kein eigener Backend-Server. Das Spiel läuft auch in einem Unterverzeichnis wie `/orbis-terrarum/`.
+Lokales Spielen läuft vollständig statisch, ohne Build, Konto oder Backend. Das Spiel funktioniert auch unter `/orbis-terrarum/`. Für geräteübergreifende Onlinepartien ist zusätzlich die vorbereitete Supabase-Anbindung nötig; siehe `ONLINE.md` im Repository. Diese ist erst nach Einrichtung des Servers aktiv.
 
 ## Bei GitHub Pages hochladen
 
@@ -47,7 +47,7 @@ Die HTML-Datei benötigt wegen der JavaScript-Module einen HTTP-Aufruf; bitte ni
 | --- | --- |
 | Provinz auswählen | Eigene Provinz anklicken |
 | Ausgewählte Anzahl erhöhen | Dieselbe Provinz erneut anklicken |
-| Alle beweglichen Einheiten auswählen | Doppelklick, lang gedrückt halten oder **Alle** |
+| Alle beweglichen Einheiten auswählen | **Alle** im Einheitenmenü |
 | Anzahl fein einstellen | Schieberegler oder **− / +** |
 | Einheitentyp wählen | **Soldaten / Reiter / Bogenschützen** |
 | Bewegen oder angreifen | Gruppe auswählen, dann direkt verbundene Nachbarprovinz anklicken |
@@ -58,7 +58,7 @@ Die HTML-Datei benötigt wegen der JavaScript-Module einen HTTP-Aufruf; bitte ni
 | Turm bauen / abreißen | Im Baumenü wählen, dann markierte Ecke anklicken |
 | Nachschub verteilen | Je Klick auf eine eigene Provinz einen Soldaten setzen |
 
-Auf Touchgeräten sind zusätzlich Zweifinger-Zoom und Verschieben möglich. Alle Spieler spielen nacheinander am selben Gerät; es gibt keinen Online-Mehrspielermodus.
+Auf Touchgeräten sind zusätzlich Zweifinger-Zoom und Verschieben möglich. Im lokalen Modus spielen alle nacheinander am selben Gerät. Nach Servereinrichtung gibt es außerdem Online-Lobbys für zwei bis sechs Geräte mit Einladungslink, fester Farbe und gespeichertem Spielstand. Der Gastgeber startet, sobald alle Plätze besetzt sind. Unter **Lobby / Links** kann jeder seinen persönlichen Fortsetzungslink sichern.
 
 ## Spielregeln
 
@@ -71,7 +71,7 @@ Auf Touchgeräten sind zusätzlich Zweifinger-Zoom und Verschieben möglich. All
 - Flüsse halbieren einen feindlichen Angriff, Mauern auf der Zielseite ebenfalls. Zusammen bleibt **ein Viertel** der Angriffskraft. Bruchteile werden abgerundet; bei gleicher Angriffskraft und Verteidigung bleibt die Provinz beim Verteidiger.
 - **Kaserne: 10 Soldaten.** Erhöht die Produktion dieser Provinz auf zwei Nachschubpunkte. Wird mit der Provinz übernommen.
 - **Mauer: 5 Soldaten**, Abriss gibt **2** zurück. Sie liegt auf der Innenseite einer passierbaren Grenze und schützt nur bei Angriffen auf diese Provinz.
-- **Grenzturm: 5 Soldaten**, Abriss gibt **2** zurück. Ein Turm pro geometrischer Ecke; Mauern verhindern ihn nicht. Er feuert einmal pro eigenem Zug auf eine gegnerische Provinz an dieser Ecke. Ein Besitzerwechsel hebt die Sperre bis zum nächsten Zug des getroffenen Spielers nicht auf.
+- **Grenzturm: 5 Soldaten**, Abriss gibt **2** zurück. Ein Turm je Provinz und Ecke; mehrere Provinzen können an derselben Ecke je einen eigenen Turm haben. Mauern verhindern ihn nicht. Er feuert einmal pro eigenem Zug auf eine gegnerische Provinz an dieser Ecke. Ein Besitzerwechsel hebt die Sperre bis zum nächsten Zug des getroffenen Spielers nicht auf.
 - **Fahne verlegen: 10 Soldaten** aus der neuen eigenen Provinz. Nach Eroberung einer Fahne gehen alle übrigen Provinzen und Gebäude dieser Fraktion an den Eroberer. Die Einheiten des besiegten Spielers werden gelöscht, überlebende Angreifer bleiben erhalten.
 - Ausgeschiedene Spieler werden übersprungen. Die letzte aktive Fraktion gewinnt. Nach 150 Runden endet eine Partie unentschieden; der Einzelspielermodus bleibt bis dahin spielbar.
 - Die Karte besteht aus vollständigen unregelmäßigen Voronoi-Zellen. Seen belegen jeweils ein bis drei Wasserzellen und können zusammenwachsen. Flüsse verlaufen zusammenhängend auf Kanten und enden an Küste oder See. Gebirge sperren Übergänge.
@@ -80,7 +80,7 @@ Auf Touchgeräten sind zusätzlich Zweifinger-Zoom und Verschieben möglich. All
 
 Die Partie wird nach jeder Aktion automatisch im lokalen Speicher dieses Browsers gespeichert. Über **Menü → Gespeicherte Partie fortsetzen** kann sie wieder geöffnet werden. Nach einem Neuladen steht dieselbe Schaltfläche im Startmenü.
 
-Der Spielstand bleibt auf diesem Gerät, in diesem Browser und unter derselben Website-Adresse. Im privaten Modus oder bei gesperrtem Browserspeicher ist dauerhaftes Speichern eventuell nicht verfügbar; das Spiel zeigt dies an. Auf anderen Geräten findet keine automatische Synchronisation statt.
+Lokale Spielstände bleiben auf diesem Gerät, in diesem Browser und unter derselben Website-Adresse. Im privaten Modus oder bei gesperrtem Browserspeicher ist dauerhaftes Speichern eventuell nicht verfügbar; das Spiel zeigt dies an. Onlinepartien werden dagegen nach jeder bestätigten Aktion auf dem Server gespeichert und synchronisiert. Derselbe Browser findet über den Einladungslink seine Farbe wieder; auf einem anderen Gerät benötigt man den persönlichen Fortsetzungslink. Diesen Link geheim halten.
 
 ## Dateien
 

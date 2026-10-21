@@ -27,10 +27,20 @@
         <label for="mountains">Gebirge <output id="mountains-value">3</output></label><input id="mountains" type="range" min="0" max="10" value="3">
         <label for="lakes">Seen <output id="lakes-value">2</output></label><input id="lakes" type="range" min="0" max="12" value="2">
       </div>
-      <p class="hint controls">Klick: auswählen · weiterer Klick: Anzahl +1 · Doppelklick: alle<br>Mausrad: Zoom am Zeiger · Ziehen: Karte verschieben</p>
+      <p class="hint controls">Klick: auswählen · weiterer Klick: Anzahl +1 · Alle: eigener Knopf<br>Mausrad: Zoom am Zeiger · Ziehen: Karte verschieben</p>
       <div class="two"><button id="regenerate" disabled>Nächste Karte</button><button id="start" class="primary" disabled>Karte spielen</button></div>
+      <label class="name-label" for="player-name">Dein Name <input id="player-name" maxlength="28" value="Spieler"></label><button id="online-create" class="quiet">Online-Lobby erstellen</button>
       <button id="resume" class="quiet" hidden>Gespeicherte Partie fortsetzen</button>
       <p id="setup-status" role="status" class="hint"></p>
+    </section>
+    <aside id="connection" hidden><span id="connection-status" role="status"></span><button id="lobby-open">Lobby / Links</button></aside>
+    <section id="lobby" class="panel setup" hidden aria-label="Online-Lobby">
+      <h2 id="lobby-title">Lobby</h2><div id="lobby-seats"></div>
+      <label>Einladungslink <input id="invite-link" readonly></label><button id="copy-invite">Einladung kopieren</button>
+      <p class="hint">Teile diesen Link mit deinen Mitspielern. Jeder erhält eine eigene Farbe.</p>
+      <label>Dein persönlicher Fortsetzungslink <input id="recovery-link" readonly type="password"></label><button id="copy-recovery">Persönlichen Link kopieren</button>
+      <p class="hint">Bewahre diesen Link für dich auf. Damit steuerst du deine Farbe auch auf einem anderen Gerät. Auf diesem Browser reicht der Einladungslink.</p>
+      <button id="lobby-start" class="primary">Partie starten</button><button id="lobby-back">Zur Partie</button><button id="leave-online" class="quiet">Zum Hauptmenü</button>
     </section>
     <section id="actions" class="panel actions" aria-label="Spielaktionen" hidden>
       <div id="province-panel" hidden>
@@ -39,7 +49,7 @@
         <div id="build-panel" class="three" hidden></div>
       </div>
       <div id="phase-hint" class="phase-hint"></div>
-      <div class="bottom"><button id="menu">Menü</button><button id="end-turn" class="primary">Zug passen</button><button id="speed">Tempo 1×</button></div>
+      <div class="bottom"><button id="menu">Menü</button><button id="end-turn" class="primary">Zug passen</button></div>
       <p class="hint keyboard">Mausrad zoomt · Ziehen verschiebt · Esc hebt die Auswahl auf</p>
     </section>
     <section id="victory" class="panel victory" hidden><h2 id="winner-title"></h2><p id="victory-text">Die letzte aktive Fraktion beherrscht die Welt.</p><button id="new-game" class="primary">Neue Partie</button></section>

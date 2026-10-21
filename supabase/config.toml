@@ -1,0 +1,4 @@
+project_id = "orbis-terrarum"
+
+[functions.orbis]
+verify_jwt = false
