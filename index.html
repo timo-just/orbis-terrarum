@@ -34,8 +34,15 @@
       <p id="setup-status" role="status" class="hint"></p>
     </section>
     <aside id="connection" hidden><span id="connection-status" role="status"></span><button id="lobby-open">Lobby / Links</button></aside>
+    <section id="join-panel" class="panel join-panel" hidden aria-label="Lobby beitreten">
+      <h2>Mitspielen</h2><p>Gib deinen Namen ein, bevor du der Lobby beitrittst.</p>
+      <form id="join-form"><label for="join-name">Dein Name</label><input id="join-name" maxlength="28" required autocomplete="nickname" placeholder="Dein Name"><button id="join-submit" class="primary" type="submit">Lobby beitreten</button></form>
+      <p id="join-status" class="hint" role="status"></p><button id="join-cancel" class="quiet">Zurück</button>
+    </section>
     <section id="lobby" class="panel setup" hidden aria-label="Online-Lobby">
       <h2 id="lobby-title">Lobby</h2><div id="lobby-seats"></div>
+      <p id="lobby-count" class="hint"></p>
+      <form id="rename-form"><label for="lobby-name">Dein Name</label><input id="lobby-name" maxlength="28" required autocomplete="nickname"><button type="submit">Namen ändern</button></form>
       <label>Einladungslink <input id="invite-link" readonly></label><button id="copy-invite">Einladung kopieren</button>
       <p class="hint">Teile diesen Link mit deinen Mitspielern. Jeder erhält eine eigene Farbe.</p>
       <label>Dein persönlicher Fortsetzungslink <input id="recovery-link" readonly type="password"></label><button id="copy-recovery">Persönlichen Link kopieren</button>

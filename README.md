@@ -58,7 +58,7 @@ Die HTML-Datei benötigt wegen der JavaScript-Module einen HTTP-Aufruf; bitte ni
 | Turm bauen / abreißen | Im Baumenü wählen, dann markierte Ecke anklicken |
 | Nachschub verteilen | Je Klick auf eine eigene Provinz einen Soldaten setzen |
 
-Auf Touchgeräten sind zusätzlich Zweifinger-Zoom und Verschieben möglich. Im lokalen Modus spielen alle nacheinander am selben Gerät. Nach Servereinrichtung gibt es außerdem Online-Lobbys für zwei bis sechs Geräte mit Einladungslink, fester Farbe und gespeichertem Spielstand. Der Gastgeber startet, sobald alle Plätze besetzt sind. Unter **Lobby / Links** kann jeder seinen persönlichen Fortsetzungslink sichern.
+Auf Touchgeräten sind zusätzlich Zweifinger-Zoom und Verschieben möglich. Im lokalen Modus spielen alle nacheinander am selben Gerät. Nach Servereinrichtung gibt es außerdem Online-Lobbys für zwei bis sechs Geräte mit Einladungslink, fester Farbe und gespeichertem Spielstand. Jede Lobby bietet sechs Plätze; der Gastgeber kann ab zwei Teilnehmern starten. Neue Spieler geben vor dem Beitritt ihren Namen ein und können ihn in der Lobby ändern. Unter **Lobby / Links** kann jeder seinen persönlichen Fortsetzungslink sichern.
 
 ## Spielregeln
 

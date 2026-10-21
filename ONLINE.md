@@ -21,8 +21,8 @@ Die Funktion verwendet die automatisch bereitgestellten Server-Variablen `SUPABA
 
 ## Spielen und Fortsetzen
 
-- Zwei bis sechs Spieler wählen, Name eintragen, **Online-Lobby erstellen**. Der Server erzeugt dieselbe Karte wie die gewählte Vorschau aus deren Kartenschlüssel und Einstellungen.
-- Einladungslink teilen. Jedes beitretende Gerät bekommt eine feste Farbe. Der Gastgeber kann starten, wenn alle Plätze belegt sind.
+- Name eintragen und **Online-Lobby erstellen**. Jede Lobby bietet sechs Plätze. Der Server erzeugt dieselbe Karte wie die gewählte Vorschau aus deren Kartenschlüssel und Einstellungen.
+- Einladungslink teilen. Jedes beitretende Gerät bekommt eine feste Farbe. Neue Spieler geben vor dem Beitritt ihren Namen ein. Der Gastgeber kann mit zwei bis sechs Teilnehmern starten; leere Plätze werden nicht mitgespielt. Namen lassen sich in der Lobby ändern.
 - Alle Geräte zeigen dieselbe Partie; nur das Gerät der aktiven Farbe kann Züge ausführen. Änderungen erscheinen spätestens nach dem nächsten Abgleich (normal etwa 1,5 Sekunden).
 - Der Server speichert jede bestätigte Aktion. Später denselben Link im selben Browser öffnen. Die Farbe wird über den lokal gespeicherten Geräteschlüssel wiederhergestellt.
 - Für einen Gerätewechsel vorher unter **Lobby / Links** den **persönlichen Fortsetzungslink** sichern. Dieser Link enthält den geheimen Spielerschlüssel und darf nicht mit Gegnern geteilt werden. Der normale Einladungslink enthält ihn nicht. Nach Öffnen eines persönlichen Links entfernt das Spiel den Schlüssel aus der Adresszeile.
