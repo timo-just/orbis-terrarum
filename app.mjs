@@ -8,10 +8,10 @@ scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
 const LABELS={soldier:'Soldaten',horse:'Reiter',archer:'Bogenschützen'};
 let world,state,settings={players:4,rivers:2,mountains:3,lakes:2},selected=null,type='soldier',amount=0,operation=null,tab='units';
 let setup=true,zoom=1,pan={x:0,y:0},dirty=true,framePending=false,speed=4,busy=null,status='',saved=null,storageOK=true;
-let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2),mapSize=600,mapCenter={x:W/2,y:H*.43};
-const pointers=new Map();let drag=null,pinch=null,layoutSetup=null;
+let viewport={left:0,top:0,width:0,height:0},W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2),mapSize=600,mapCenter={x:W/2,y:H*.43};
+const pointers=new Map();let drag=null,pinch=null,layoutSetup=null,fitCamera=true;
 const online=new OnlineGame(receiveOnline,message=>{$('connection-status').textContent=message;});
-let onlinePending=false,pendingRoom=null,lobbyNameDirty=false,controlsCache=null,factionsKey='';
+let onlinePending=false,pendingRoom=null,lobbyNameDirty=false,hasGame=false,menuOpen=false,controlsCache=null,factionsKey='';
 const terrain=document.createElement('canvas');terrain.width=terrain.height=S;const terrainContext=terrain.getContext('2d');let terrainKey='';
 const polyPath=poly=>{const p=new Path2D();poly.forEach((v,i)=>i?p.lineTo(v.x*S,v.y*S):p.moveTo(v.x*S,v.y*S));p.closePath();return p;};
 const paths=new Map(),layouts=new Map();
@@ -30,7 +30,10 @@ function unit(context,t,x,y,color,stage=0,r=3.1){const grey='#848b93';if(stage==
 }
 function screenToWorld(x,y){return {x:.5+(x-mapCenter.x-pan.x)/(mapSize*zoom),y:.5+(y-mapCenter.y-pan.y)/(mapSize*zoom)};}
 function worldToScreen(p){return {x:mapCenter.x+pan.x+(p.x-.5)*mapSize*zoom,y:mapCenter.y+pan.y+(p.y-.5)*mapSize*zoom};}
-function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);const small=W<650;if(setup){const panel=$(online.room?'lobby':'setup').getBoundingClientRect(),space=small?Math.max(170,H-panel.bottom-12):Math.max(220,W-panel.right-30);mapSize=small?Math.min(W*.9,space*.96):Math.min(space*.95,H*.85);mapCenter=small?{x:W/2,y:panel.bottom+space/2}:{x:panel.right+(W-panel.right)/2,y:H*.5};}else{mapSize=Math.min(W*.94,H*(small?.72:.78));mapCenter={x:W/2,y:H*(small?.40:.43)};}requestRender();}
+function resize(){const rect=canvas.getBoundingClientRect(),ratio=Math.min(devicePixelRatio||1,2);if(!rect.width||!rect.height)return;if(!fitCamera&&viewport.left===rect.left&&viewport.top===rect.top&&viewport.width===rect.width&&viewport.height===rect.height&&DPR===ratio)return;const oldCenter=mapCenter,keepCamera=hasGame&&!setup&&!fitCamera&&viewport.width>0&&(Math.abs(zoom-1)>.001||Math.abs(pan.x)+Math.abs(pan.y)>.1);viewport={left:rect.left,top:rect.top,width:rect.width,height:rect.height};W=rect.width;H=rect.height;DPR=ratio;canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);mapCenter={x:rect.left+W/2,y:rect.top+H/2};if(keepCamera){pan.x+=oldCenter.x-mapCenter.x;pan.y+=oldCenter.y-mapCenter.y;if(selected!==null){const point=worldToScreen(world.provinces[selected].home),margin=24;pan.x+=Math.max(rect.left+margin,Math.min(rect.right-margin,point.x))-point.x;pan.y+=Math.max(rect.top+margin,Math.min(rect.bottom-margin,point.y))-point.y;}}else{mapSize=Math.min(W,H)*.98;if(fitCamera){zoom=1;pan={x:0,y:0};}}fitCamera=false;requestRender();}
+
+new ResizeObserver(resize).observe(canvas);
+
 function requestRender(){if(framePending)return;framePending=true;requestAnimationFrame(render);}
 function drawLine(context,a,b,width,color){context.beginPath();context.moveTo(a.x*S,a.y*S);context.lineTo(b.x*S,b.y*S);context.strokeStyle=color;context.lineWidth=width;context.lineCap='round';context.stroke();}
 function drawTower(c,x,y,color){c.save();c.translate(x,y);c.shadowColor='#16263055';c.shadowBlur=1;c.shadowOffsetY=1;c.fillStyle='#c7c7ae';c.strokeStyle='#4f554f';c.lineWidth=.9;c.beginPath();c.arc(0,0,4.7,0,Math.PI*2);c.fill();c.stroke();c.shadowColor='transparent';c.fillStyle='#929b91';c.beginPath();c.arc(0,0,3.1,0,Math.PI*2);c.fill();c.stroke();for(let i=0;i<8;i++){c.save();c.rotate(i*Math.PI/4);c.fillStyle='#e4e0c8';c.fillRect(-1,-5,2,1.9);c.strokeRect(-1,-5,2,1.9);c.restore();}c.fillStyle=color;c.fillRect(-1.1,-1.1,2.2,2.2);c.restore();}
@@ -83,7 +86,7 @@ function drawScene(){g.clearRect(0,0,S,S);const nextTerrainKey=world.seed+':'+st
   if(!setup&&state.phase!=='draft')state.p.forEach((p,id)=>{const counts=displayCounts(id),positions=symbolPositions(id,counts,obstacles[id]);g.save();g.clip(paths.get(id));TYPES.forEach(t=>(positions[t]||[]).forEach((pos,i)=>unit(g,t,pos.x*S,pos.y*S,COLORS[p.owner],shade(p,t,i,state.player))));g.restore();});
   if(operation&&selected!==null){for(const target of targets()){if(operation.includes('Tower')){const p=towerPoint({province:selected,corner:target});g.fillStyle='#fff';g.beginPath();g.arc(p.x*S,p.y*S,6,0,Math.PI*2);g.fill();g.strokeStyle='#263d4c';g.lineWidth=1.4;g.stroke();}else{const edge=edgeFor(selected,target);if(edge)drawLine(g,edge.a,edge.b,5,'#fff9ae');}}}
 }
-function render(time){framePending=false;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle='#bfe8f4';ctx.fillRect(0,0,W,H);
+function render(time){framePending=false;ctx.setTransform(DPR,0,0,DPR,-viewport.left*DPR,-viewport.top*DPR);ctx.clearRect(viewport.left,viewport.top,W,H);ctx.fillStyle='#bfe8f4';ctx.fillRect(viewport.left,viewport.top,W,H);
   if(!world||!state)return;if(busy){busy.progress=Math.min(1,(time-busy.start)/busy.duration);if(busy.progress>=1){busy=null;dirty=true;}else if(busy.kind==='volley')dirty=true;}
   if(dirty){drawScene();dirty=false;}
   ctx.save();ctx.translate(mapCenter.x+pan.x,mapCenter.y+pan.y);ctx.scale(mapSize*zoom/S,mapSize*zoom/S);ctx.drawImage(scene,-S/2,-S/2);ctx.restore();
@@ -104,8 +107,8 @@ function commit(action){if(online.room){sendOnlineAction(action);return;}if(busy
     if(action.kind==='move'){const lost=previous.flags.findIndex((flag,id)=>id>0&&flag>=0&&state.flags[id]===-2);if(lost>0)status=`Fahne von ${NAMES[lost]} erobert: Alle Provinzen und Gebäude übernommen, gegnerische Einheiten entfernt.`;}
     save();updateUI();requestRender();
   }catch(error){announce(error.message);}}
-function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!setup||Boolean(online.room)||Boolean(pendingRoom);document.body.classList.toggle('choosing-map',setup);if(layoutSetup!==setup){layoutSetup=setup;resize();}$('hud').hidden=setup;$('actions').hidden=setup;$('victory').hidden=true;if(setup){$('resume').hidden=!saved;return;}
-  const nextFactionsKey=state.player+state.phase+state.p.map(p=>p.owner).join(',');if(factionsKey!==nextFactionsKey){factionsKey=nextFactionsKey;$('factions').replaceChildren(...Array.from({length:state.players},(_,i)=>{const id=i+1,el=document.createElement('div');el.className=`faction${id===state.player?' current':''}${state.phase!=='draft'&&!active(state,id)?' out':''}`;el.style.background=COLORS[id];el.textContent=`${NAMES[id].toUpperCase()} ${state.p.filter(p=>p.owner===id).length}`;return el;}));}
+function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!setup||Boolean(online.room)||Boolean(pendingRoom);document.body.classList.toggle('choosing-map',setup);document.body.classList.toggle('menu-open',menuOpen);$('topbar').hidden=!hasGame&&!online.room;$('menu').disabled=!hasGame;$('menu').setAttribute('aria-expanded',String(menuOpen));$('local-menu').hidden=!menuOpen||Boolean(online.room);if(online.room)$('lobby').hidden=online.snapshot?.status!=='lobby'&&!menuOpen;if(layoutSetup!==setup){layoutSetup=setup;fitCamera=true;}$('hud').hidden=setup;$('actions').hidden=setup||menuOpen;$('victory').hidden=true;if(setup){$('resume').hidden=!saved;resize();return;}
+  const nextFactionsKey=state.player+state.phase+state.p.map(p=>p.owner).join(',');if(factionsKey!==nextFactionsKey){factionsKey=nextFactionsKey;$('factions').replaceChildren(...Array.from({length:state.players},(_,i)=>{const id=i+1,el=document.createElement('div');el.className=`faction${id===state.player?' current':''}${state.phase!=='draft'&&!active(state,id)?' out':''}`;el.style.background=COLORS[id];const name=document.createElement('span'),count=document.createElement('span');name.className='faction-name';count.className='faction-count';name.textContent=NAMES[id].toUpperCase();count.textContent=state.p.filter(p=>p.owner===id).length;el.append(name,count);return el;}));}
   $('status').textContent=online.room?`Du: ${NAMES[online.color]}. ${onlinePending?'Aktion wird gespeichert …':phaseText()}`:status||phaseText();const own=selected!==null&&state.p[selected].owner===state.player&&(!online.room||online.myTurn),normal=state.phase==='play'&&state.pool===0&&(!busy||Boolean(online.room))&&!onlinePending&&(!online.room||online.myTurn);
   $('selection').hidden=!own||!normal;if(own){const movable=available(state.p[selected],type);amount=Math.max(0,Math.min(amount,movable));$('selection').textContent=`${amount} / ${movable} ${LABELS[type].toUpperCase()}`;$('amount').max=movable;$('amount').value=amount;}
   $('province-panel').hidden=!own||!normal;$('units-panel').hidden=tab!=='units';$('build-panel').hidden=tab!=='build';$('units-tab').setAttribute('aria-pressed',String(tab==='units'));$('build-tab').setAttribute('aria-pressed',String(tab==='build'));
@@ -122,11 +125,11 @@ function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!se
   }
   $('end-turn').textContent=state.phase==='draft'?'Startprovinz wählen':state.pool?`Nachschub: ${state.pool}`:'Zug passen';$('end-turn').disabled=!normal;
   const won=winner(state);if(won!==null||state.drawn){$('victory').hidden=false;$('winner-title').textContent=state.drawn?'Remis':`${NAMES[won]} gewinnt`;$('winner-title').style.color=state.drawn?'#c8e8ef':COLORS[won];$('victory-text').textContent=state.drawn?'Das Rundenlimit ist erreicht.':'Die letzte aktive Fraktion beherrscht die Welt.';$('province-panel').hidden=true;$('end-turn').disabled=true;}
-  if(!storageOK)$('status').textContent+=' Automatisches Speichern ist in diesem Browser nicht verfügbar.';
+  if(!storageOK)$('status').textContent+=' Automatisches Speichern ist in diesem Browser nicht verfügbar.';resize();
 }
 function button(text,fn,disabled=false,cls=''){const b=document.createElement('button');b.textContent=text;b.disabled=disabled;b.className=cls;b.addEventListener('click',fn);return b;}
 function chooseOperation(op){operation=operation===op?null:op;dirty=true;updateUI();requestRender();}
-function selectAt(x,y,all=false){if(setup||(busy&&!online.room)||onlinePending||(online.room&&!online.myTurn)||state.drawn||winner(state)!==null)return;const point=screenToWorld(x,y),id=world.provinces.findIndex(p=>inside(point,p.cell));
+function selectAt(x,y,all=false){if(setup||menuOpen||(busy&&!online.room)||onlinePending||(online.room&&!online.myTurn)||state.drawn||winner(state)!==null)return;const point=screenToWorld(x,y),id=world.provinces.findIndex(p=>inside(point,p.cell));
   if(state.phase==='draft'){if(id>=0&&state.p[id].owner===0){if(online.room){sendOnlineAction({kind:'draft',source:id});return;}state=chooseStart(state,id);status=phaseText();dirty=true;save();updateUI();requestRender();}else announce('Wähle eine freie grüne Provinz.');return;}
   if(state.pool>0){if(id>=0&&state.p[id].owner===state.player)commit({kind:'deploy',source:id,amount:1});else announce(phaseText());return;}
   if(operation&&selected!==null){const choices=targets();let nearest=null,d=Infinity;for(const target of choices){const value=operation.includes('Tower')?dist2(point,towerPoint({province:selected,corner:target})):segmentDistance(point,edgeFor(selected,target).a,edgeFor(selected,target).b);if(value<d){d=value;nearest=target;}}
@@ -147,17 +150,21 @@ canvas.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;p
 canvas.addEventListener('pointerup',e=>{pointers.delete(e.pointerId);if(drag&&!drag.moved&&!drag.right&&!pinch)selectAt(e.clientX,e.clientY,false);drag=null;pinch=null;});
 canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);drag=null;pinch=null;});
 canvas.addEventListener('dblclick',e=>e.preventDefault());
-window.addEventListener('keydown',e=>{if(e.key==='Escape')clearSelection();});window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(menuOpen)toggleMenu();else clearSelection();}});window.addEventListener('resize',()=>{fitCamera=true;resize();});
 $('units-tab').onclick=()=>{tab='units';operation=null;dirty=true;updateUI();requestRender();};$('build-tab').onclick=()=>{tab='build';updateUI();};
 $('amount').oninput=()=>{amount=Number($('amount').value);updateUI();requestRender();};$('less').onclick=()=>{amount=Math.max(0,amount-1);updateUI();requestRender();};$('more').onclick=()=>{if(selected!==null)amount=Math.min(available(state.p[selected],type),amount+1);updateUI();requestRender();};$('all').onclick=()=>{if(selected!==null)amount=available(state.p[selected],type);updateUI();requestRender();};
 $('end-turn').onclick=()=>commit({kind:'pass'});
-$('menu').onclick=()=>{if(busy)return;if(online.room){$('lobby').hidden=false;return;}setup=true;clearSelection();updateUI();};$('new-game').onclick=()=>{if(online.room){$('lobby').hidden=false;return;}setup=true;clearSelection();updateUI();};
-function prepareWorld(){terrainKey='';controlsCache=null;factionsKey='';paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));zoom=1;pan={x:0,y:0};dirty=true;}
+function toggleMenu(){if(!hasGame)return;menuOpen=!menuOpen;if(online.snapshot&&menuOpen)receiveOnline(online.snapshot);updateUI();requestRender();}
+$('menu').onclick=toggleMenu;
+$('new-game').onclick=()=>{menuOpen=true;updateUI();};
+$('prepare-new-game').onclick=()=>{menuOpen=false;hasGame=false;setup=true;clearSelection();regenerate();};
+
+function prepareWorld(){fitCamera=true;terrainKey='';controlsCache=null;factionsKey='';paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));zoom=1;pan={x:0,y:0};dirty=true;}
 async function regenerate(){const b=$('regenerate');b.disabled=true;$('start').disabled=true;$('setup-status').textContent='Die Welt entsteht …';await new Promise(requestAnimationFrame);await new Promise(resolve=>setTimeout(resolve,10));try{world=generateWorld(settings);state=createState(world,settings.players);prepareWorld();$('setup-status').textContent='Bereit. Alle Fraktionen werden von Menschen gespielt.';updateUI();requestRender();}catch(error){$('setup-status').textContent=error.message;}finally{b.disabled=false;$('start').disabled=!world;}}
 function playerButtons(){$('players').replaceChildren(...Array.from({length:6},(_,i)=>button(String(i+1),()=>{settings.players=i+1;playerButtons();},false,settings.players===i+1?'active':'')));}
 for(const key of ['rivers','mountains','lakes']){$(key).oninput=()=>{settings[key]=Number($(key).value);$(`${key}-value`).textContent=settings[key];};$(key).onchange=regenerate;}
-$('regenerate').onclick=regenerate;$('start').onclick=()=>{if(!world)return;online.leave();$('connection').hidden=true;state=createState(world,settings.players);setup=false;selected=null;operation=null;busy=null;amount=0;status=phaseText();dirty=true;save();updateUI();requestRender();};
-$('resume').onclick=()=>{if(!saved)return;online.leave();$('connection').hidden=true;try{world=saved.world;state=saved.state;settings={...settings,...saved.settings};playerButtons();for(const key of ['rivers','mountains','lakes']){$(key).value=settings[key];$(`${key}-value`).textContent=settings[key];}setup=false;selected=null;operation=null;busy=null;prepareWorld();status=phaseText();updateUI();requestRender();}catch{announce('Die gespeicherte Partie konnte nicht geladen werden.');}};
+$('regenerate').onclick=regenerate;$('start').onclick=()=>{if(!world)return;online.leave();hasGame=true;menuOpen=false;$('connection').hidden=true;state=createState(world,settings.players);setup=false;selected=null;operation=null;busy=null;amount=0;status=phaseText();dirty=true;save();updateUI();requestRender();};
+$('resume').onclick=()=>{if(!saved)return;online.leave();hasGame=true;menuOpen=false;$('connection').hidden=true;try{world=saved.world;state=saved.state;settings={...settings,...saved.settings};playerButtons();for(const key of ['rivers','mountains','lakes']){$(key).value=settings[key];$(`${key}-value`).textContent=settings[key];}setup=false;selected=null;operation=null;busy=null;prepareWorld();status=phaseText();updateUI();requestRender();}catch{announce('Die gespeicherte Partie konnte nicht geladen werden.');}};
 try{const text=localStorage.getItem('orbis-terrarum-v1');if(text){const data=JSON.parse(text);if(data.version===1&&data.world?.provinces?.length&&data.state?.p?.length===data.world.provinces.length)saved=data;}}catch{storageOK=false;}
 playerButtons();resize();regenerate().then(openInvitation);
 window.addEventListener('hashchange',()=>{online.leave();openInvitation();});
@@ -168,7 +175,7 @@ function receiveOnline(data,meta={event:'sync'}){
   const first=!world||world.seed!==data.world.seed||state?.players!==data.state.players;
   const previous=state;world=data.world;state=data.state;settings={...data.settings};
   const action=meta.event==='action'?meta.action:meta.remote?data.lastAction:null;if(first||action){selected=null;amount=0;operation=null;}if(first)busy=null;
-  const wasSetup=setup;setup=data.status==='lobby';if(first)prepareWorld();else dirty=true;
+  const wasSetup=setup;setup=data.status==='lobby';hasGame=!setup;if(wasSetup&&!setup)menuOpen=false;if(first)prepareWorld();else dirty=true;
   if(data.status==='play'&&previous&&action?.kind==='pass'&&state.lastShots.length)busy={kind:'volley',shots:state.lastShots,progress:0,start:performance.now(),duration:1100/speed};
   if(data.status==='play'&&previous&&action?.kind==='move')busy={kind:'move',action,owner:previous.player,progress:0,start:performance.now(),duration:200/speed};
   if(action?.source!==undefined&&state.p[action.source]?.owner===data.you&&state.player===data.you&&['convert','barracks','tower','wall','demolishWall','demolishTower','flag'].includes(action.kind)){selected=action.source;if(action.kind==='convert'){type=action.conversion==='horse'?'horse':action.conversion==='archer'?'archer':'soldier';amount=Math.min(1,available(state.p[selected],type));}}
@@ -180,7 +187,7 @@ function receiveOnline(data,meta={event:'sync'}){
   updateLobbyControls();
   $('lobby-count').textContent=data.status==='lobby'?`${data.seats.length} / 6 Plätze belegt. Der Spielleiter kann ab zwei Spielern starten.`:`${data.seats.length} Spieler in dieser Partie.`;
   if(!lobbyNameDirty&&document.activeElement!==$('lobby-name'))$('lobby-name').value=data.seats.find(s=>s.color===data.you)?.name||'';
-  $('lobby-back').hidden=data.status==='lobby';}
+  }
   status=phaseText();updateUI();$('setup').hidden=true;requestRender();
 }
 function sendOnlineAction(action){if(onlinePending||!online.myTurn)return;try{online.enqueue(action);}catch(e){announce(e.message);$('connection-status').textContent=e.message;}}
@@ -205,8 +212,8 @@ $('lobby-start').onclick=async()=>{if(onlinePending)return;onlinePending=true;up
 $('lobby-refresh').onclick=async()=>{await online.poll();updateLobbyControls();};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&online.room)online.poll();});
 window.addEventListener('focus',()=>{if(online.room)online.poll();});
-$('lobby-back').onclick=()=>{$('lobby').hidden=true;};
-$('lobby-open').onclick=()=>{if(online.snapshot){receiveOnline(online.snapshot);$('lobby').hidden=false;}};
+
+
 for(const [id,target] of [['copy-invite','invite-link'],['copy-recovery','recovery-link']])$(id).onclick=async()=>{try{await navigator.clipboard.writeText($(target).value);$('connection-status').textContent='Link kopiert.';}catch{$(target).focus();$(target).select();$('connection-status').textContent='Bitte den markierten Link kopieren.';}};
-$('leave-online').onclick=()=>{if(online.saving){$('connection-status').textContent='Bitte kurz warten, bis deine Aktionen gespeichert sind.';return;}online.leave();onlinePending=false;history.replaceState(null,'',location.pathname+location.search);$('lobby').hidden=true;$('connection').hidden=true;setup=true;layoutSetup=null;regenerate();};
+$('leave-online').onclick=()=>{if(online.saving){$('connection-status').textContent='Bitte kurz warten, bis deine Aktionen gespeichert sind.';return;}online.leave();onlinePending=false;hasGame=false;menuOpen=false;history.replaceState(null,'',location.pathname+location.search);$('lobby').hidden=true;$('connection').hidden=true;setup=true;layoutSetup=null;regenerate();};
 window.addEventListener('beforeunload',event=>{if(online.saving){event.preventDefault();event.returnValue='';}});
