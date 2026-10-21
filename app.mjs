@@ -1,4 +1,4 @@
-import {OnlineGame} from './online.mjs';
+import {OnlineGame} from './online.mjs?v=lobby-3';
 import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade} from './engine.mjs';
 import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs';
 import {ICONS} from './icons.mjs';
@@ -11,7 +11,7 @@ let setup=true,zoom=1,pan={x:0,y:0},dirty=true,framePending=false,speed=4,busy=n
 let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2),mapSize=600,mapCenter={x:W/2,y:H*.43};
 const pointers=new Map();let drag=null,pinch=null,layoutSetup=null;
 const online=new OnlineGame(receiveOnline,message=>{$('connection-status').textContent=message;});
-let onlinePending=false,pendingRoom=null;
+let onlinePending=false,pendingRoom=null,lobbyNameDirty=false;
 const polyPath=poly=>{const p=new Path2D();poly.forEach((v,i)=>i?p.lineTo(v.x*S,v.y*S):p.moveTo(v.x*S,v.y*S));p.closePath();return p;};
 const paths=new Map(),layouts=new Map();
 const glyphs=new Map();
@@ -102,7 +102,7 @@ function commit(action){if(online.room){sendOnlineAction(action);return;}if(busy
     if(action.kind==='move'){const lost=previous.flags.findIndex((flag,id)=>id>0&&flag>=0&&state.flags[id]===-2);if(lost>0)status=`Fahne von ${NAMES[lost]} erobert: Alle Provinzen und Gebäude übernommen, gegnerische Einheiten entfernt.`;}
     save();updateUI();requestRender();
   }catch(error){announce(error.message);}}
-function updateUI(){if(!state)return;$('setup').hidden=!setup||Boolean(online.room)||Boolean(pendingRoom);document.body.classList.toggle('choosing-map',setup);if(layoutSetup!==setup){layoutSetup=setup;resize();}$('hud').hidden=setup;$('actions').hidden=setup;$('victory').hidden=true;if(setup){$('resume').hidden=!saved;return;}
+function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!setup||Boolean(online.room)||Boolean(pendingRoom);document.body.classList.toggle('choosing-map',setup);if(layoutSetup!==setup){layoutSetup=setup;resize();}$('hud').hidden=setup;$('actions').hidden=setup;$('victory').hidden=true;if(setup){$('resume').hidden=!saved;return;}
   $('factions').replaceChildren(...Array.from({length:state.players},(_,i)=>{const id=i+1,el=document.createElement('div');el.className=`faction${id===state.player?' current':''}${state.phase!=='draft'&&!active(state,id)?' out':''}`;el.style.background=COLORS[id];el.textContent=`${NAMES[id].toUpperCase()} ${state.p.filter(p=>p.owner===id).length}`;return el;}));
   $('status').textContent=online.room?`Du: ${NAMES[online.color]}. ${onlinePending?'Aktion wird gespeichert …':phaseText()}`:status||phaseText();const own=selected!==null&&state.p[selected].owner===state.player&&(!online.room||online.myTurn),normal=state.phase==='play'&&state.pool===0&&!busy&&!onlinePending&&(!online.room||online.myTurn);
   $('selection').hidden=!own||!normal;if(own){const movable=available(state.p[selected],type);amount=Math.max(0,Math.min(amount,movable));$('selection').textContent=`${amount} / ${movable} ${LABELS[type].toUpperCase()}`;$('amount').max=movable;$('amount').value=amount;}
@@ -171,10 +171,9 @@ function receiveOnline(data){
   $('lobby-title').textContent=data.status==='lobby'?'Lobby':'Partie gespeichert';
   $('lobby-seats').replaceChildren(...Array.from({length:settings.players},(_,i)=>{const seat=data.seats.find(s=>s.color===i+1),el=document.createElement('p');el.style.borderLeft=`5px solid ${COLORS[i+1]}`;el.textContent=`${NAMES[i+1]}: ${seat?seat.name:'Wartet auf Spieler …'}${i+1===data.you?' (du)':''}`;return el;}));
   $('invite-link').value=online.link;$('recovery-link').value=online.recoveryLink;
-  $('lobby-start').hidden=data.status!=='lobby'||data.you!==1;$('lobby-start').disabled=data.seats.length<2||onlinePending;
-  $('lobby-start').textContent=`Mit ${data.seats.length} Spielern starten`;
+  updateLobbyControls();
   $('lobby-count').textContent=data.status==='lobby'?`${data.seats.length} / 6 Plätze belegt. Der Spielleiter kann ab zwei Spielern starten.`:`${data.seats.length} Spieler in dieser Partie.`;
-  if(document.activeElement!==$('lobby-name'))$('lobby-name').value=data.seats.find(s=>s.color===data.you)?.name||'';
+  if(!lobbyNameDirty&&document.activeElement!==$('lobby-name'))$('lobby-name').value=data.seats.find(s=>s.color===data.you)?.name||'';
   $('lobby-back').hidden=data.status==='lobby';
   status=phaseText();updateUI();$('setup').hidden=true;requestRender();
 }
@@ -193,8 +192,13 @@ async function openInvitation(){
 $('online-create').onclick=async()=>{if(!online.configured){$('setup-status').textContent='Onlinepartien sind noch nicht eingerichtet. Lokal spielen ist möglich.';return;}const b=$('online-create');b.disabled=true;try{localStorage.setItem('orbis-name',$('player-name').value);await online.create({...settings,players:6,seed:world.seed},$('player-name').value);history.replaceState(null,'',online.link);}catch(e){$('setup-status').textContent=e.message;}finally{b.disabled=false;}};
 $('join-form').onsubmit=async e=>{e.preventDefault();const name=$('join-name').value.trim();if(!pendingRoom||!name)return;const b=$('join-submit');b.disabled=true;$('join-status').textContent='Du trittst der Lobby bei …';try{localStorage.setItem('orbis-name',name);await online.join(pendingRoom,name);}catch(error){online.leave();$('join-status').textContent=error.message;}finally{b.disabled=false;}};
 $('join-cancel').onclick=()=>{pendingRoom=null;$('join-panel').hidden=true;online.leave();history.replaceState(null,'',location.pathname+location.search);layoutSetup=null;updateUI();};
-$('rename-form').onsubmit=async e=>{e.preventDefault();const name=$('lobby-name').value.trim();if(!name||onlinePending)return;onlinePending=true;try{await online.send('rename',{name});localStorage.setItem('orbis-name',name);$('connection-status').textContent='Name gespeichert.';}catch(error){$('connection-status').textContent=error.message;}finally{onlinePending=false;}};
-$('lobby-start').onclick=async()=>{if(onlinePending)return;onlinePending=true;$('lobby-start').disabled=true;try{await online.send('start');}catch(e){$('connection-status').textContent=e.message;}finally{onlinePending=false;if(online.snapshot)receiveOnline(online.snapshot);}};
+function updateLobbyControls(){const data=online.snapshot;if(!data)return;$('lobby-start').hidden=data.status!=='lobby'||data.you!==1;$('lobby-start').disabled=data.seats.length<2||onlinePending||online.sending;$('lobby-start').textContent=onlinePending?'Bitte warten …':`Mit ${data.seats.length} Spielern starten`;$('rename-submit').disabled=onlinePending||online.sending;$('rename-submit').textContent=onlinePending?'Bitte warten …':'Namen speichern';}
+$('lobby-name').oninput=()=>{lobbyNameDirty=true;$('rename-status').textContent='Noch nicht gespeichert.';};
+$('rename-form').onsubmit=async e=>{e.preventDefault();const name=$('lobby-name').value.trim();if(!name||onlinePending)return;onlinePending=true;updateLobbyControls();$('rename-status').textContent='Name wird gespeichert …';try{try{await online.send('rename',{name});}catch(error){if(error.status!==409)throw error;await online.send('rename',{name});}lobbyNameDirty=false;localStorage.setItem('orbis-name',name);$('lobby-name').value=name;$('rename-status').textContent=`Gespeichert: ${name}`;}catch(error){$('rename-status').textContent=error.message;}finally{onlinePending=false;updateLobbyControls();}};
+$('lobby-start').onclick=async()=>{if(onlinePending)return;onlinePending=true;updateLobbyControls();try{await online.send('start');}catch(e){$('connection-status').textContent=e.message;}finally{onlinePending=false;updateLobbyControls();}};
+$('lobby-refresh').onclick=async()=>{await online.poll();updateLobbyControls();};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&online.room)online.poll();});
+window.addEventListener('focus',()=>{if(online.room)online.poll();});
 $('lobby-back').onclick=()=>{$('lobby').hidden=true;};
 $('lobby-open').onclick=()=>{if(online.snapshot){receiveOnline(online.snapshot);$('lobby').hidden=false;}};
 for(const [id,target] of [['copy-invite','invite-link'],['copy-recovery','recovery-link']])$(id).onclick=async()=>{try{await navigator.clipboard.writeText($(target).value);$('connection-status').textContent='Link kopiert.';}catch{$(target).focus();$(target).select();$('connection-status').textContent='Bitte den markierten Link kopieren.';}};

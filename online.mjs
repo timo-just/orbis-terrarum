@@ -8,7 +8,7 @@ export class OnlineGame {
   async request(kind,data={}){
     if(!this.configured)throw Error('Onlinepartien benötigen noch die Server-Einrichtung. Lokal spielen funktioniert bereits.');
     const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
-    try{const r=await fetch(ONLINE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,room:this.room,token:this.token(this.room||'pending'),...data}),signal:controller.signal});const body=await r.json();if(!r.ok){const error=Error(body.error||'Server nicht erreichbar.');error.status=r.status;throw error;}return body;}finally{clearTimeout(timeout);}
+    try{const r=await fetch(ONLINE_URL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,room:this.room,token:this.token(this.room||'pending'),...data}),signal:controller.signal});const body=await r.json();if(!r.ok){const error=Error(body.error||'Server nicht erreichbar.');error.status=r.status;throw error;}return body;}finally{clearTimeout(timeout);}
   }
   receive(data){if(data.unchanged)return;if(this.snapshot&&data.revision<this.snapshot.revision)return;const changed=!this.snapshot||data.revision!==this.snapshot.revision;this.snapshot=data;if(changed)this.onUpdate(data);}
   async create(settings,name){this.leave();const room=crypto.randomUUID();this.room=room;try{this.receive(await this.request('create',{settings,name}));this.watch();}catch(e){this.room=null;throw e;}}

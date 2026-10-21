@@ -7,7 +7,7 @@
   <meta name="description" content="Orbis Terrarum: rundenbasierte Eroberung auf zufälligen Voronoi-Karten. Für ein bis sechs Menschen an einem Bildschirm.">
   <title>Orbis Terrarum</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css?v=lobby-3">
 </head>
 <body>
   <main id="game" aria-label="Orbis Terrarum">
@@ -42,7 +42,8 @@
     <section id="lobby" class="panel setup" hidden aria-label="Online-Lobby">
       <h2 id="lobby-title">Lobby</h2><div id="lobby-seats"></div>
       <p id="lobby-count" class="hint"></p>
-      <form id="rename-form"><label for="lobby-name">Dein Name</label><input id="lobby-name" maxlength="28" required autocomplete="nickname"><button type="submit">Namen ändern</button></form>
+      <form id="rename-form"><label for="lobby-name">Dein Name</label><input id="lobby-name" maxlength="28" required autocomplete="nickname"><button id="rename-submit" type="submit">Namen speichern</button><p id="rename-status" class="hint" role="status"></p></form>
+      <button id="lobby-refresh">Lobby aktualisieren</button>
       <label>Einladungslink <input id="invite-link" readonly></label><button id="copy-invite">Einladung kopieren</button>
       <p class="hint">Teile diesen Link mit deinen Mitspielern. Jeder erhält eine eigene Farbe.</p>
       <label>Dein persönlicher Fortsetzungslink <input id="recovery-link" readonly type="password"></label><button id="copy-recovery">Persönlichen Link kopieren</button>
@@ -62,6 +63,6 @@
     <section id="victory" class="panel victory" hidden><h2 id="winner-title"></h2><p id="victory-text">Die letzte aktive Fraktion beherrscht die Welt.</p><button id="new-game" class="primary">Neue Partie</button></section>
     <noscript>Für Orbis Terrarum muss JavaScript aktiviert sein.</noscript>
   </main>
-  <script type="module" src="./app.mjs"></script>
+  <script type="module" src="./app.mjs?v=lobby-3"></script>
 </body>
 </html>
