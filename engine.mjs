@@ -32,7 +32,7 @@ export function legal(s,a) {
   if(a.kind==='deploy')return false;
   if(a.kind==='pass')return true;
   if(!own)return false;
-  if(a.kind==='convert')return ({horse:p.soldier>=3,archer:p.soldier>=10,footHorse:p.horse>=1,footArcher:p.archer>=1})[a.conversion]===true;
+  if(a.kind==='convert')return ({horse:p.soldier>=3,archer:p.soldier>=8,footHorse:p.horse>=1,footArcher:p.archer>=1})[a.conversion]===true;
   if(a.kind==='barracks')return !p.barracks&&p.soldier>=10;
   if(a.kind==='flag')return s.flags[s.player]>=0&&s.flags[s.player]!==a.source&&p.soldier>=10;
   if(a.kind==='tower'||a.kind==='demolishTower')return s.corners[a.target]?.includes(a.source)&&
@@ -72,7 +72,7 @@ export function apply(s,a) {
     n.lastShots=shots(s,next);n.lastShots.forEach(shot=>{remove(n.p[shot.target],shot.type,1);if(shot.tower!==null)n.cooldown[`${shot.source}:${shot.tower}`]=s.p[shot.target].owner;});return n;
   }
   if(a.kind==='convert'){
-    const [from,to,cost,produced]=({horse:['soldier','horse',3,1],archer:['soldier','archer',10,1],footHorse:['horse','soldier',1,2],footArcher:['archer','soldier',1,5]})[a.conversion];
+    const [from,to,cost,produced]=({horse:['soldier','horse',3,1],archer:['soldier','archer',8,1],footHorse:['horse','soldier',1,2],footArcher:['archer','soldier',1,5]})[a.conversion];
     const b=remove(p,from,cost);add(p,to,produced,b[1]===0&&b[0]>0?produced:0,b[1]>0?produced:0);return n;
   }
   if(a.kind==='barracks'){spend(p,10);p.barracks=true;return n;}

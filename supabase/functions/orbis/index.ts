@@ -13,5 +13,5 @@ Deno.serve(async request=>{
   const origin=request.headers.get('Origin')||'',cors={'Access-Control-Allow-Origin':origins.has(origin)?origin:'https://timo-just.github.io','Access-Control-Allow-Headers':'content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Vary':'Origin'};
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
   try{if(request.method!=='POST')return Response.json({error:'POST erforderlich.'},{status:405,headers:cors});if(Number(request.headers.get('Content-Length'))>20000)throw Error('Anfrage zu groß.');const text=await request.text();if(text.length>20000)throw Error('Anfrage zu groß.');return Response.json(await service(JSON.parse(text)),{headers:cors});}
-  catch(error){const e=error as Error & {status?:number};return Response.json({error:e.status||e.message==='Diese Aktion ist hier nicht möglich.'?e.message:'Aktion fehlgeschlagen. Bitte erneut versuchen.'},{status:e.status||400,headers:cors});}
+  catch(error){const e=error as Error & {status?:number};return Response.json({error:e.status?e.message:'Server vorübergehend nicht erreichbar. Bitte erneut versuchen.'},{status:e.status||500,headers:{...cors,'Cache-Control':'no-store'}});}
 });

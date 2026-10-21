@@ -25,6 +25,7 @@ Die Funktion verwendet die automatisch bereitgestellten Server-Variablen `SUPABA
 - Einladungslink teilen. Jedes beitretende Gerät bekommt eine feste Farbe. Neue Spieler geben vor dem Beitritt ihren Namen ein. Der Gastgeber kann mit zwei bis sechs Teilnehmern starten; leere Plätze werden nicht mitgespielt. Namen lassen sich in der Lobby ändern.
 - Alle Geräte zeigen dieselbe Partie; nur das Gerät der aktiven Farbe kann Züge ausführen. Änderungen erscheinen spätestens nach dem nächsten Abgleich (normal etwa 1,5 Sekunden).
 - Der Server speichert jede bestätigte Aktion. Später denselben Link im selben Browser öffnen. Die Farbe wird über den lokal gespeicherten Geräteschlüssel wiederhergestellt.
+- Spielaktionen erscheinen sofort und werden im Hintergrund geordnet gespeichert. Schnelle Klickfolgen werden gebündelt; währenddessen zeigt die Verbindungsanzeige die ausstehenden Aktionen. Erst bei **gespeichert** ist alles bestätigt. Bei Verbindungsfehlern wird erneut übertragen, ohne eine bestätigte Aktion doppelt auszuführen. Ungültige Aktionen werden anhand des Serverstands korrigiert.
 - Für einen Gerätewechsel vorher unter **Lobby / Links** den **persönlichen Fortsetzungslink** sichern. Dieser Link enthält den geheimen Spielerschlüssel und darf nicht mit Gegnern geteilt werden. Der normale Einladungslink enthält ihn nicht. Nach Öffnen eines persönlichen Links entfernt das Spiel den Schlüssel aus der Adresszeile.
 - Wer seinen Browser-Speicher löscht und keinen persönlichen Link gesichert hat, kann die Farbe nicht wieder übernehmen. Es gibt keine Konten und keine automatische Rücksetzung fremder Farben.
 - Beim Öffnen derselben Farbe auf mehreren Geräten bleiben parallele Zugversuche durch eine Versionsprüfung abgesichert. Ein veralteter Zug wird abgelehnt und der aktuelle Stand geladen.
@@ -39,6 +40,7 @@ Das GitHub-Repository enthält das fertige Supabase-Bundle. Im vollständigen lo
 
 ```powershell
 node tools/online-checks.mjs
+node tools/queue-checks.mjs
 node tools/web-checks.mjs
 python tools/browser-web-check.py
 python tools/browser-online-check.py

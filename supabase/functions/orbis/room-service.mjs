@@ -5,7 +5,7 @@ const validId=s=>typeof s==='string'&&/^[a-f0-9-]{36}$/.test(s);
 const nameOf=s=>typeof s==='string'&&s.trim()?s.trim().slice(0,28):'Spieler';
 export function createRoomService(store,cryptoApi=globalThis.crypto){
   async function hash(token){const data=await cryptoApi.subtle.digest('SHA-256',new TextEncoder().encode(token));return Array.from(new Uint8Array(data),b=>b.toString(16).padStart(2,'0')).join('');}
-  function view(row,you){const {seats,...snapshot}=row.snapshot;if(snapshot.status==='lobby')snapshot.settings={...snapshot.settings,players:6};return {room:row.id,revision:row.revision,...snapshot,seats:seats.map(({color,name})=>({color,name})),you};}
+  function view(row,you,compact=false){const {seats,recentRequests=[],...snapshot}=row.snapshot;if(snapshot.status==='lobby')snapshot.settings={...snapshot.settings,players:6};if(compact){delete snapshot.world;const {links,corners,...state}=snapshot.state;snapshot.state=state;}return {room:row.id,revision:row.revision,...snapshot,seats:seats.map(({color,name})=>({color,name})),acknowledgedRequests:recentRequests.filter(r=>r.player===you).map(r=>r.id),you};}
   return async function handle(input){
     const {kind,room,token}=input;
     if(!validId(room)||typeof token!=='string'||token.length<60||token.length>200)fail('Ungültiger Raum oder Spielerschlüssel.');
@@ -20,7 +20,7 @@ export function createRoomService(store,cryptoApi=globalThis.crypto){
     for(let attempt=0;attempt<5;attempt++){
       const row=await store.get(room);if(!row)fail('Partie nicht gefunden.',404);
       const seat=row.snapshot.seats.find(s=>s.secret===secret);let color=seat?.color;
-      if(kind==='read'){if(!seat)fail('Bitte zuerst der Lobby beitreten.',403);if(input.revision===row.revision)return {room,revision:row.revision,unchanged:true};return view(row,color);}
+      if(kind==='read'){if(!seat)fail('Bitte zuerst der Lobby beitreten.',403);if(input.revision===row.revision)return {room,revision:row.revision,unchanged:true};return view(row,color,input.compact===true);}
       const next=structuredClone(row);
       if(kind==='join'){
         if(seat)return view(row,color);
@@ -29,6 +29,7 @@ export function createRoomService(store,cryptoApi=globalThis.crypto){
         color=row.snapshot.seats.length+1;next.snapshot.seats.push({color,name:nameOf(input.name),secret});
       }else{
         if(!seat)fail('Kein Zugriff auf diese Farbe.',403);
+        if(kind==='actions'&&row.snapshot.recentRequests?.some(r=>r.id===input.requestId&&r.player===color))return view(row,color,input.compact===true);
         if(input.revision!==row.revision)fail('Der Spielstand hat sich geändert. Bitte erneut versuchen.',409);
         if(kind==='start'){
           if(color!==1)fail('Nur der Gastgeber kann starten.',403);
@@ -39,15 +40,22 @@ export function createRoomService(store,cryptoApi=globalThis.crypto){
         }else if(kind==='rename'){
           if(typeof input.name!=='string'||!input.name.trim())fail('Bitte einen Namen eingeben.');
           next.snapshot.seats.find(s=>s.color===color).name=nameOf(input.name);
-        }else if(kind==='action'){
+        }else if(kind==='action'||kind==='actions'){
           if(row.snapshot.status!=='play'||row.snapshot.state.player!==color)fail('Du bist nicht am Zug.',403);
-          const action=input.action;if(!action||typeof action!=='object')fail('Aktion fehlt.');
-          next.snapshot.state=action.kind==='draft'?chooseStart(row.snapshot.state,action.source):apply(row.snapshot.state,action);
-          if(action.kind==='draft'&&row.snapshot.state.phase!=='draft')fail('Die Startprovinzen sind bereits gewählt.');
-          next.snapshot.lastAction=action;
+          const actions=kind==='actions'?input.actions:[input.action];
+          if(!Array.isArray(actions)||actions.length<1||actions.length>64)fail('Ungültige Aktionsliste.');
+          if(kind==='actions'&&!validId(input.requestId))fail('Ungültige Aktionskennung.');
+          for(const action of actions){
+            if(next.snapshot.state.player!==color)fail('Du bist nicht am Zug.',403);
+            if(!action||typeof action!=='object')fail('Aktion fehlt.');
+            try{next.snapshot.state=action.kind==='draft'?chooseStart(next.snapshot.state,action.source):apply(next.snapshot.state,action);}catch(error){fail(error.message);}
+            next.snapshot.lastAction=action;
+          }
+          if(kind==='actions')next.snapshot.recentRequests=[...(next.snapshot.recentRequests||[]),{id:input.requestId,player:color}].slice(-128);
+          next.snapshot.lastActionRevision=row.revision+1;
         }else fail('Unbekannte Aktion.');
       }
-      next.revision++;if(await store.compareAndSwap(next,row.revision))return view(next,color);
+      next.revision++;if(await store.compareAndSwap(next,row.revision))return view(next,color,input.compact===true);
     }fail('Eine andere Aktion war schneller. Bitte erneut versuchen.',409);
   };
 }

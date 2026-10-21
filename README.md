@@ -65,7 +65,7 @@ Auf Touchgeräten sind zusätzlich Zweifinger-Zoom und Verschieben möglich. Im 
 - Die Farben sind Blau, Rot, Grün, Gelb, Lila und Schwarz. Startprovinzen werden in dieser Reihenfolge gewählt. Die Züge laufen anschließend **umgekehrt**. Jede Startprovinz erhält fünf Soldaten.
 - Ab der zweiten Runde gibt es pro Zug einen Nachschubpunkt je eigener Provinz, mit Kaserne zwei. Alle Punkte werden zunächst frei als Soldaten auf eigene Provinzen verteilt. Erst danach sind normale Aktionen erlaubt.
 - Soldaten und Bogenschützen bewegen sich einmal, Reiter zweimal pro eigenem Zug. Bereits verbrauchte Einheiten des aktiven Spielers sind grau; Reiter nach dem ersten Schritt halb grau.
-- **3 Soldaten → 1 Reiter**, **1 Reiter → 2 Soldaten**, **10 Soldaten → 1 Bogenschütze**, **1 Bogenschütze → 5 Soldaten**. Verbrauchte Bewegung wird beim Umtausch übernommen.
+- **3 Soldaten → 1 Reiter**, **1 Reiter → 2 Soldaten**, **8 Soldaten → 1 Bogenschütze**, **1 Bogenschütze → 5 Soldaten**. Verbrauchte Bewegung wird beim Umtausch übernommen.
 - Reiter und Soldaten sind im Nahkampf gleich stark. Bogenschützen geben keine Nahkampfverteidigung; bei einer Eroberung werden sie vernichtet. Bogenschützen können nur in eigene Provinzen ziehen.
 - Jeder Bogenschütze schießt einmal zu Beginn des eigenen Zuges auf einen direkt verbundenen Gegner. Berge blockieren diese Verbindung; Flüsse und Mauern verhindern Beschuss nicht. Mehrere Schützen dürfen dieselbe Provinz treffen.
 - Flüsse halbieren einen feindlichen Angriff, Mauern auf der Zielseite ebenfalls. Zusammen bleibt **ein Viertel** der Angriffskraft. Bruchteile werden abgerundet; bei gleicher Angriffskraft und Verteidigung bleibt die Provinz beim Verteidiger.

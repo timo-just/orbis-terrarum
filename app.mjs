@@ -1,5 +1,5 @@
-import {OnlineGame} from './online.mjs?v=lobby-3';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade} from './engine.mjs';
+import {OnlineGame} from './online.mjs?v=perf-4';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade} from './engine.mjs?v=perf-4';
 import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs';
 import {ICONS} from './icons.mjs';
 
@@ -11,7 +11,8 @@ let setup=true,zoom=1,pan={x:0,y:0},dirty=true,framePending=false,speed=4,busy=n
 let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2),mapSize=600,mapCenter={x:W/2,y:H*.43};
 const pointers=new Map();let drag=null,pinch=null,layoutSetup=null;
 const online=new OnlineGame(receiveOnline,message=>{$('connection-status').textContent=message;});
-let onlinePending=false,pendingRoom=null,lobbyNameDirty=false;
+let onlinePending=false,pendingRoom=null,lobbyNameDirty=false,controlsCache=null,factionsKey='';
+const terrain=document.createElement('canvas');terrain.width=terrain.height=S;const terrainContext=terrain.getContext('2d');let terrainKey='';
 const polyPath=poly=>{const p=new Path2D();poly.forEach((v,i)=>i?p.lineTo(v.x*S,v.y*S):p.moveTo(v.x*S,v.y*S));p.closePath();return p;};
 const paths=new Map(),layouts=new Map();
 const glyphs=new Map();
@@ -59,7 +60,7 @@ function symbolPositions(id,counts,structures){const cache=JSON.stringify([id,co
   });if(layouts.size>500)layouts.clear();layouts.set(cache,out);return out;
 }
 function displayCounts(id){const p=state.p[id],counts=Object.fromEntries(TYPES.map(t=>[t,p[t]]));if(busy?.kind==='volley')busy.shots.forEach((shot,i)=>{if(shot.target===id&&busy.progress<.55+(i%6)*.06)counts[shot.type]++;});return counts;}
-function drawScene(){g.clearRect(0,0,S,S);const random=rng(world.seed+777);world.provinces.forEach((p,id)=>{
+function drawScene(){g.clearRect(0,0,S,S);const nextTerrainKey=world.seed+':'+state.p.map(p=>p.owner).join(',');if(terrainKey===nextTerrainKey){g.drawImage(terrain,0,0);}else{const random=rng(world.seed+777);world.provinces.forEach((p,id)=>{
     const path=paths.get(id);g.fillStyle=COLORS[state.p[id].owner];g.fill(path);g.strokeStyle='#fafcfde8';g.lineWidth=1.5;g.stroke(path);
     if(state.p[id].owner===0){g.save();g.clip(path);for(let j=0;j<8;j++){const x=p.home.x+(random()-.5)*.09,y=p.home.y+(random()-.5)*.08;if(p.biome==='forest'){g.fillStyle='#255e32';g.beginPath();g.ellipse(x*S+1,y*S+2,3,4,0,0,Math.PI*2);g.fill();g.fillStyle='#347846';g.beginPath();g.arc(x*S,y*S,3,0,Math.PI*2);g.fill();}else{g.strokeStyle=p.biome==='dry'?'#dfd18b70':'#daf0b670';g.lineWidth=.8;g.beginPath();g.moveTo(x*S-1,y*S);g.lineTo(x*S,y*S+3);g.lineTo(x*S+2,y*S-1);g.stroke();}}g.restore();}
   });
@@ -72,6 +73,7 @@ function drawScene(){g.clearRect(0,0,S,S);const random=rng(world.seed+777);world
     for(let i=0;i<sections;i++){const a=ridge[i],b=ridge[i+1];g.fillStyle=i%2?'#999c7a':'#b8b798';g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(b[0]+3,b[1]+8);g.lineTo(a[0]-3,a[1]+7);g.closePath();g.fill();g.fillStyle=i%2?'#d4d0ae':'#c4c0a0';g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(b[0]-3,b[1]-7);g.lineTo(a[0]+2,a[1]-8);g.closePath();g.fill();}g.restore();
   }});
   g.restore();
+  terrainContext.clearRect(0,0,S,S);terrainContext.drawImage(scene,0,0);terrainKey=nextTerrainKey;}
   state.walls.forEach(key=>{const [a,b]=key.split(':').map(Number),edge=edgeFor(a,b);if(!edge)return;const segment=wallSegment(edge,a);g.save();g.clip(paths.get(a));drawWall(g,segment,COLORS[state.p[a].owner]);g.restore();});
   if(selected!==null){g.strokeStyle='#fff';g.lineWidth=4;g.stroke(paths.get(selected));}
   const obstacles=state.p.map(()=>[]);
@@ -103,17 +105,20 @@ function commit(action){if(online.room){sendOnlineAction(action);return;}if(busy
     save();updateUI();requestRender();
   }catch(error){announce(error.message);}}
 function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!setup||Boolean(online.room)||Boolean(pendingRoom);document.body.classList.toggle('choosing-map',setup);if(layoutSetup!==setup){layoutSetup=setup;resize();}$('hud').hidden=setup;$('actions').hidden=setup;$('victory').hidden=true;if(setup){$('resume').hidden=!saved;return;}
-  $('factions').replaceChildren(...Array.from({length:state.players},(_,i)=>{const id=i+1,el=document.createElement('div');el.className=`faction${id===state.player?' current':''}${state.phase!=='draft'&&!active(state,id)?' out':''}`;el.style.background=COLORS[id];el.textContent=`${NAMES[id].toUpperCase()} ${state.p.filter(p=>p.owner===id).length}`;return el;}));
-  $('status').textContent=online.room?`Du: ${NAMES[online.color]}. ${onlinePending?'Aktion wird gespeichert …':phaseText()}`:status||phaseText();const own=selected!==null&&state.p[selected].owner===state.player&&(!online.room||online.myTurn),normal=state.phase==='play'&&state.pool===0&&!busy&&!onlinePending&&(!online.room||online.myTurn);
+  const nextFactionsKey=state.player+state.phase+state.p.map(p=>p.owner).join(',');if(factionsKey!==nextFactionsKey){factionsKey=nextFactionsKey;$('factions').replaceChildren(...Array.from({length:state.players},(_,i)=>{const id=i+1,el=document.createElement('div');el.className=`faction${id===state.player?' current':''}${state.phase!=='draft'&&!active(state,id)?' out':''}`;el.style.background=COLORS[id];el.textContent=`${NAMES[id].toUpperCase()} ${state.p.filter(p=>p.owner===id).length}`;return el;}));}
+  $('status').textContent=online.room?`Du: ${NAMES[online.color]}. ${onlinePending?'Aktion wird gespeichert …':phaseText()}`:status||phaseText();const own=selected!==null&&state.p[selected].owner===state.player&&(!online.room||online.myTurn),normal=state.phase==='play'&&state.pool===0&&(!busy||Boolean(online.room))&&!onlinePending&&(!online.room||online.myTurn);
   $('selection').hidden=!own||!normal;if(own){const movable=available(state.p[selected],type);amount=Math.max(0,Math.min(amount,movable));$('selection').textContent=`${amount} / ${movable} ${LABELS[type].toUpperCase()}`;$('amount').max=movable;$('amount').value=amount;}
   $('province-panel').hidden=!own||!normal;$('units-panel').hidden=tab!=='units';$('build-panel').hidden=tab!=='build';$('units-tab').setAttribute('aria-pressed',String(tab==='units'));$('build-tab').setAttribute('aria-pressed',String(tab==='build'));
   $('phase-hint').textContent=state.phase==='draft'?'Startprovinzen wählen':state.pool?`Noch ${state.pool} Soldaten frei platzieren`:operation?'Markierte Kante oder Ecke anklicken. Esc bricht ab.':own?'': 'Eigene Provinz anklicken, Einheiten auswählen und eine Nachbarprovinz anklicken.';
+  const sameControls=controlsCache&&controlsCache.state===state&&controlsCache.selected===selected&&controlsCache.type===type&&controlsCache.operation===operation&&controlsCache.tab===tab;
+  if(!sameControls){controlsCache={state,selected,type,operation,tab};
   $('unit-types').replaceChildren(...TYPES.map(t=>button(`${LABELS[t]} (${own?state.p[selected][t]:0})`,()=>{type=t;amount=Math.min(1,available(state.p[selected],type));updateUI();},false,t===type?'active':'')));
-  const conversions=[['horse','3 S → 1 Reiter'],['footHorse','1 Reiter → 2 S'],['archer','10 S → 1 Bogen'],['footArcher','1 Bogen → 5 S']];
+  const conversions=[['horse','3 S → 1 Reiter'],['footHorse','1 Reiter → 2 S'],['archer','8 S → 1 Bogen'],['footArcher','1 Bogen → 5 S']];
   $('conversions').replaceChildren(...conversions.map(([conversion,label])=>button(label,()=>commit({kind:'convert',source:selected,conversion}),!own||!legal(state,{kind:'convert',source:selected,conversion}))));
   const build=$('build-panel');build.replaceChildren();if(own){const p=state.p[selected];build.append(button(p.barracks?'Kaserne gebaut':'Kaserne · 10',()=>commit({kind:'barracks',source:selected}),!legal(state,{kind:'barracks',source:selected})),button(operation==='buildWall'?'Abbrechen':'Mauer · 5',()=>chooseOperation('buildWall'),!state.links[selected].some(l=>legal(state,{kind:'wall',source:selected,target:l.target}))),button(operation==='buildTower'?'Abbrechen':'Grenzturm · 5',()=>chooseOperation('buildTower'),!state.corners.some((_,target)=>legal(state,{kind:'tower',source:selected,target}))),button(state.flags[state.player]===selected?'Fahne steht hier':'Fahne hierher · 10',()=>commit({kind:'flag',source:selected}),!legal(state,{kind:'flag',source:selected})));
     if(state.walls.some(w=>w.startsWith(`${selected}:`)))build.append(button(operation==='demolishWall'?'Abbrechen':'Mauer abreißen · +2',()=>chooseOperation('demolishWall'),false,'danger'));
     if(state.towers.some(t=>t.province===selected))build.append(button(operation==='demolishTower'?'Abbrechen':'Turm abreißen · +2',()=>chooseOperation('demolishTower'),false,'danger'));
+  }
   }
   $('end-turn').textContent=state.phase==='draft'?'Startprovinz wählen':state.pool?`Nachschub: ${state.pool}`:'Zug passen';$('end-turn').disabled=!normal;
   const won=winner(state);if(won!==null||state.drawn){$('victory').hidden=false;$('winner-title').textContent=state.drawn?'Remis':`${NAMES[won]} gewinnt`;$('winner-title').style.color=state.drawn?'#c8e8ef':COLORS[won];$('victory-text').textContent=state.drawn?'Das Rundenlimit ist erreicht.':'Die letzte aktive Fraktion beherrscht die Welt.';$('province-panel').hidden=true;$('end-turn').disabled=true;}
@@ -121,7 +126,7 @@ function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!se
 }
 function button(text,fn,disabled=false,cls=''){const b=document.createElement('button');b.textContent=text;b.disabled=disabled;b.className=cls;b.addEventListener('click',fn);return b;}
 function chooseOperation(op){operation=operation===op?null:op;dirty=true;updateUI();requestRender();}
-function selectAt(x,y,all=false){if(setup||busy||onlinePending||(online.room&&!online.myTurn)||state.drawn||winner(state)!==null)return;const point=screenToWorld(x,y),id=world.provinces.findIndex(p=>inside(point,p.cell));
+function selectAt(x,y,all=false){if(setup||(busy&&!online.room)||onlinePending||(online.room&&!online.myTurn)||state.drawn||winner(state)!==null)return;const point=screenToWorld(x,y),id=world.provinces.findIndex(p=>inside(point,p.cell));
   if(state.phase==='draft'){if(id>=0&&state.p[id].owner===0){if(online.room){sendOnlineAction({kind:'draft',source:id});return;}state=chooseStart(state,id);status=phaseText();dirty=true;save();updateUI();requestRender();}else announce('Wähle eine freie grüne Provinz.');return;}
   if(state.pool>0){if(id>=0&&state.p[id].owner===state.player)commit({kind:'deploy',source:id,amount:1});else announce(phaseText());return;}
   if(operation&&selected!==null){const choices=targets();let nearest=null,d=Infinity;for(const target of choices){const value=operation.includes('Tower')?dist2(point,towerPoint({province:selected,corner:target})):segmentDistance(point,edgeFor(selected,target).a,edgeFor(selected,target).b);if(value<d){d=value;nearest=target;}}
@@ -147,7 +152,7 @@ $('units-tab').onclick=()=>{tab='units';operation=null;dirty=true;updateUI();req
 $('amount').oninput=()=>{amount=Number($('amount').value);updateUI();requestRender();};$('less').onclick=()=>{amount=Math.max(0,amount-1);updateUI();requestRender();};$('more').onclick=()=>{if(selected!==null)amount=Math.min(available(state.p[selected],type),amount+1);updateUI();requestRender();};$('all').onclick=()=>{if(selected!==null)amount=available(state.p[selected],type);updateUI();requestRender();};
 $('end-turn').onclick=()=>commit({kind:'pass'});
 $('menu').onclick=()=>{if(busy)return;if(online.room){$('lobby').hidden=false;return;}setup=true;clearSelection();updateUI();};$('new-game').onclick=()=>{if(online.room){$('lobby').hidden=false;return;}setup=true;clearSelection();updateUI();};
-function prepareWorld(){paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));zoom=1;pan={x:0,y:0};dirty=true;}
+function prepareWorld(){terrainKey='';controlsCache=null;factionsKey='';paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));zoom=1;pan={x:0,y:0};dirty=true;}
 async function regenerate(){const b=$('regenerate');b.disabled=true;$('start').disabled=true;$('setup-status').textContent='Die Welt entsteht …';await new Promise(requestAnimationFrame);await new Promise(resolve=>setTimeout(resolve,10));try{world=generateWorld(settings);state=createState(world,settings.players);prepareWorld();$('setup-status').textContent='Bereit. Alle Fraktionen werden von Menschen gespielt.';updateUI();requestRender();}catch(error){$('setup-status').textContent=error.message;}finally{b.disabled=false;$('start').disabled=!world;}}
 function playerButtons(){$('players').replaceChildren(...Array.from({length:6},(_,i)=>button(String(i+1),()=>{settings.players=i+1;playerButtons();},false,settings.players===i+1?'active':'')));}
 for(const key of ['rivers','mountains','lakes']){$(key).oninput=()=>{settings[key]=Number($(key).value);$(`${key}-value`).textContent=settings[key];};$(key).onchange=regenerate;}
@@ -158,26 +163,27 @@ playerButtons();resize();regenerate().then(openInvitation);
 window.addEventListener('hashchange',()=>{online.leave();openInvitation();});
 
 
-function receiveOnline(data){
+function receiveOnline(data,meta={event:'sync'}){
   pendingRoom=null;$('join-panel').hidden=true;
   const first=!world||world.seed!==data.world.seed||state?.players!==data.state.players;
-  const previous=state;world=data.world;state=data.state;settings={...data.settings};busy=null;selected=null;amount=0;operation=null;
-  setup=data.status==='lobby';if(first)prepareWorld();else dirty=true;
-  if(data.status==='play'&&previous&&data.lastAction?.kind==='pass'&&state.lastShots.length)busy={kind:'volley',shots:state.lastShots,progress:0,start:performance.now(),duration:1100/speed};
-  if(data.status==='play'&&previous&&data.lastAction?.kind==='move')busy={kind:'move',action:data.lastAction,owner:previous.player,progress:0,start:performance.now(),duration:200/speed};
-  if(data.lastAction?.source!==undefined&&state.p[data.lastAction.source]?.owner===data.you&&state.player===data.you&&['convert','barracks','tower','wall','demolishWall','demolishTower','flag'].includes(data.lastAction.kind)){selected=data.lastAction.source;if(data.lastAction.kind==='convert'){type=data.lastAction.conversion==='horse'?'horse':data.lastAction.conversion==='archer'?'archer':'soldier';amount=Math.min(1,available(state.p[selected],type));}}
-  $('lobby').hidden=data.status!=='lobby';$('connection').hidden=false;$('setup').hidden=true;
-  $('connection-status').textContent=`Online · Du spielst ${NAMES[data.you]} · gespeichert`;
+  const previous=state;world=data.world;state=data.state;settings={...data.settings};
+  const action=meta.event==='action'?meta.action:meta.remote?data.lastAction:null;if(first||action){selected=null;amount=0;operation=null;}if(first)busy=null;
+  const wasSetup=setup;setup=data.status==='lobby';if(first)prepareWorld();else dirty=true;
+  if(data.status==='play'&&previous&&action?.kind==='pass'&&state.lastShots.length)busy={kind:'volley',shots:state.lastShots,progress:0,start:performance.now(),duration:1100/speed};
+  if(data.status==='play'&&previous&&action?.kind==='move')busy={kind:'move',action,owner:previous.player,progress:0,start:performance.now(),duration:200/speed};
+  if(action?.source!==undefined&&state.p[action.source]?.owner===data.you&&state.player===data.you&&['convert','barracks','tower','wall','demolishWall','demolishTower','flag'].includes(action.kind)){selected=action.source;if(action.kind==='convert'){type=action.conversion==='horse'?'horse':action.conversion==='archer'?'archer':'soldier';amount=Math.min(1,available(state.p[selected],type));}}
+  if(data.status==='lobby')$('lobby').hidden=false;else if(wasSetup||first)$('lobby').hidden=true;$('connection').hidden=false;$('setup').hidden=true;
+  $('connection-status').textContent=`Online · Du spielst ${NAMES[data.you]} · ${online.saving?`${online.pending.length} Aktion(en) werden gespeichert …`:'gespeichert'}`;
   $('lobby-title').textContent=data.status==='lobby'?'Lobby':'Partie gespeichert';
-  $('lobby-seats').replaceChildren(...Array.from({length:settings.players},(_,i)=>{const seat=data.seats.find(s=>s.color===i+1),el=document.createElement('p');el.style.borderLeft=`5px solid ${COLORS[i+1]}`;el.textContent=`${NAMES[i+1]}: ${seat?seat.name:'Wartet auf Spieler …'}${i+1===data.you?' (du)':''}`;return el;}));
+  if(data.status==='lobby'||first||!$('lobby').hidden){$('lobby-seats').replaceChildren(...Array.from({length:settings.players},(_,i)=>{const seat=data.seats.find(s=>s.color===i+1),el=document.createElement('p');el.style.borderLeft=`5px solid ${COLORS[i+1]}`;el.textContent=`${NAMES[i+1]}: ${seat?seat.name:'Wartet auf Spieler …'}${i+1===data.you?' (du)':''}`;return el;}));
   $('invite-link').value=online.link;$('recovery-link').value=online.recoveryLink;
   updateLobbyControls();
   $('lobby-count').textContent=data.status==='lobby'?`${data.seats.length} / 6 Plätze belegt. Der Spielleiter kann ab zwei Spielern starten.`:`${data.seats.length} Spieler in dieser Partie.`;
   if(!lobbyNameDirty&&document.activeElement!==$('lobby-name'))$('lobby-name').value=data.seats.find(s=>s.color===data.you)?.name||'';
-  $('lobby-back').hidden=data.status==='lobby';
+  $('lobby-back').hidden=data.status==='lobby';}
   status=phaseText();updateUI();$('setup').hidden=true;requestRender();
 }
-async function sendOnlineAction(action){if(onlinePending||!online.myTurn||busy)return;onlinePending=true;updateUI();try{await online.send('action',{action});}catch(e){announce(e.message);$('connection-status').textContent=e.message;}finally{onlinePending=false;updateUI();}}
+function sendOnlineAction(action){if(onlinePending||!online.myTurn)return;try{online.enqueue(action);}catch(e){announce(e.message);$('connection-status').textContent=e.message;}}
 async function openInvitation(){
   const params=new URLSearchParams(location.hash.slice(1)),room=params.get('room');if(!room)return;
   if(!/^[a-f0-9-]{36}$/.test(room)){announce('Ungültiger Einladungslink.');return;}
@@ -202,4 +208,5 @@ window.addEventListener('focus',()=>{if(online.room)online.poll();});
 $('lobby-back').onclick=()=>{$('lobby').hidden=true;};
 $('lobby-open').onclick=()=>{if(online.snapshot){receiveOnline(online.snapshot);$('lobby').hidden=false;}};
 for(const [id,target] of [['copy-invite','invite-link'],['copy-recovery','recovery-link']])$(id).onclick=async()=>{try{await navigator.clipboard.writeText($(target).value);$('connection-status').textContent='Link kopiert.';}catch{$(target).focus();$(target).select();$('connection-status').textContent='Bitte den markierten Link kopieren.';}};
-$('leave-online').onclick=()=>{online.leave();onlinePending=false;history.replaceState(null,'',location.pathname+location.search);$('lobby').hidden=true;$('connection').hidden=true;setup=true;layoutSetup=null;regenerate();};
+$('leave-online').onclick=()=>{if(online.saving){$('connection-status').textContent='Bitte kurz warten, bis deine Aktionen gespeichert sind.';return;}online.leave();onlinePending=false;history.replaceState(null,'',location.pathname+location.search);$('lobby').hidden=true;$('connection').hidden=true;setup=true;layoutSetup=null;regenerate();};
+window.addEventListener('beforeunload',event=>{if(online.saving){event.preventDefault();event.returnValue='';}});
