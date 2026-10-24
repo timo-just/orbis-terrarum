@@ -1,11 +1,11 @@
-import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=combat-9';
-import {guideHTML} from './guide.mjs?v=combat-9';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=combat-9';
-import {makeBattle,drawBattles} from './combat.mjs?v=combat-9';
-import {OnlineGame} from './online.mjs?v=combat-9';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=combat-9';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=combat-9';
-import {ICONS} from './icons.mjs?v=combat-9';
+import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=interaction-10';
+import {guideHTML} from './guide.mjs?v=interaction-10';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=interaction-10';
+import {makeBattle,drawBattles} from './combat.mjs?v=interaction-10';
+import {OnlineGame} from './online.mjs?v=interaction-10';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=interaction-10';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=interaction-10';
+import {ICONS} from './icons.mjs?v=interaction-10';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -140,7 +140,7 @@ function button(text,fn,disabled=false,cls=''){const b=document.createElement('b
 function chooseOperation(op){operation=operation===op?null:op;dirty=true;updateUI();requestRender();}
 function selectAt(x,y,all=false){if(setup||menuOpen||onlinePending||(online.room&&!online.myTurn)||state.drawn||winner(state)!==null)return;const point=screenToWorld(x,y),id=world.provinces.findIndex(p=>inside(point,p.cell));
   if(state.phase==='draft'){if(id>=0&&state.p[id].owner===0){if(online.room){sendOnlineAction({kind:'draft',source:id});return;}state=chooseStart(state,id);status=phaseText();dirty=true;save();updateUI();requestRender();}else announce('Wähle eine freie grüne Provinz.');return;}
-  if(state.pool>0){if(id>=0&&state.p[id].owner===state.player)commit({kind:'deploy',source:id,amount:Math.min(deployAmount,state.pool)});else announce(phaseText());return;}
+  if(state.pool>0){if(id>=0&&state.p[id].owner===state.player){const quantity=Math.min(deployAmount,state.pool);deployAmount=1;commit({kind:'deploy',source:id,amount:quantity});}else announce(phaseText());return;}
   if(operation&&selected!==null){const choices=targets();let nearest=null,d=Infinity;for(const target of choices){const value=operation.includes('Tower')?dist2(point,towerPoint({province:selected,corner:target})):segmentDistance(point,edgeFor(selected,target).a,edgeFor(selected,target).b);if(value<d){d=value;nearest=target;}}
     const tolerance=20/(mapSize*zoom);if(nearest!==null&&d<tolerance*tolerance){commit({kind:operation==='buildTower'?'tower':operation==='buildWall'?'wall':operation,source:selected,target:nearest});return;}if(id<0){clearSelection();return;}announce('Bitte direkt auf eine markierte Kante oder Ecke klicken.');return;
   }
@@ -161,7 +161,7 @@ canvas.addEventListener('wheel',e=>{e.preventDefault();const point=screenToWorld
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',e=>{if(e.button!==0&&e.button!==2)return;canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});drag={x:e.clientX,y:e.clientY,pan:{...pan},moved:false,right:e.button===2,time:performance.now()};if(pointers.size===2){const [a,b]=[...pointers.values()];pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),zoom,point:screenToWorld((a.x+b.x)/2,(a.y+b.y)/2)};}});
 canvas.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch&&pointers.size===2){const [a,b]=[...pointers.values()],x=(a.x+b.x)/2,y=(a.y+b.y)/2;zoom=Math.max(.55,Math.min(4,pinch.zoom*Math.hypot(a.x-b.x,a.y-b.y)/pinch.distance));pan.x=x-mapCenter.x-(pinch.point.x-.5)*mapSize*zoom;pan.y=y-mapCenter.y-(pinch.point.y-.5)*mapSize*zoom;if(drag)drag.moved=true;requestRender();}else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)>5)drag.moved=true;if(drag.moved){pan={x:drag.pan.x+dx,y:drag.pan.y+dy};requestRender();}}});
-canvas.addEventListener('pointerup',e=>{pointers.delete(e.pointerId);if(drag&&!drag.moved&&!drag.right&&!pinch)selectAt(e.clientX,e.clientY,false);drag=null;pinch=null;});
+canvas.addEventListener('pointerup',e=>{pointers.delete(e.pointerId);if(drag&&!drag.moved&&!pinch){if(!drag.right)selectAt(e.clientX,e.clientY,false);else if(canUseShortcuts()&&state.pool===0&&selected!==null&&amount>0&&!operation){const point=screenToWorld(e.clientX,e.clientY),target=world.provinces.findIndex(p=>inside(point,p.cell));if(target>=0&&state.p[target].owner!==state.player){const action={kind:type==='archer'?'shoot':'move',source:selected,target,amount,type};if(legal(state,action))commit(action);}}}drag=null;pinch=null;});
 canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);drag=null;pinch=null;});
 canvas.addEventListener('dblclick',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('guide').open){$('guide').close();return;}if(menuOpen)toggleMenu();else clearSelection();return;}

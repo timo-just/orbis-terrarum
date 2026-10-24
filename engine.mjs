@@ -39,7 +39,7 @@ export function legal(s,a) {
   if(a.kind==='barracks')return !p.barracks&&p.soldier>=10;
   if(a.kind==='flag')return s.flags[s.player]>=0&&s.flags[s.player]!==a.source&&p.soldier>=10;
   if(a.kind==='tower'||a.kind==='demolishTower')return s.corners[a.target]?.includes(a.source)&&
-    (a.kind==='tower'?!s.towers.some(t=>t.corner===a.target&&t.province===a.source)&&p.soldier>=5:s.towers.some(t=>t.corner===a.target&&t.province===a.source));
+    (a.kind==='tower'?s.corners[a.target].filter(id=>id!==a.source&&!s.links[a.source].some(l=>l.target===id)).length<2&&!s.towers.some(t=>t.corner===a.target&&t.province===a.source)&&p.soldier>=5:s.towers.some(t=>t.corner===a.target&&t.province===a.source));
   if(a.kind==='wall'||a.kind==='demolishWall')return s.links[a.source].some(l=>l.target===a.target)&&
     (a.kind==='wall'?!s.walls.includes(wallKey(a.source,a.target))&&p.soldier>=5:s.walls.includes(wallKey(a.source,a.target)));
   return a.kind==='move'&&TYPES.includes(a.type)&&s.p[a.target]&&Number.isInteger(a.amount)&&a.amount>0&&a.amount<=available(p,a.type)&&
