@@ -1,18 +1,18 @@
-import {drawRivers} from './rivers.mjs?v=barracks-refund-22';
-import {drawFlag,flagPosition} from './flags.mjs?v=barracks-refund-22';
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=barracks-refund-22';
-import {drawOrnateFrame} from './frame.mjs?v=barracks-refund-22';
-import {drawParchment} from './parchment.mjs?v=barracks-refund-22';
-import {drawMountain} from './mountains.mjs?v=barracks-refund-22';
-import {drawUnit as unit} from './units.mjs?v=barracks-refund-22';
-import {drawBarracks} from './barracks.mjs?v=barracks-refund-22';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=barracks-refund-22';
-import {guideHTML} from './guide.mjs?v=barracks-refund-22';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=barracks-refund-22';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=barracks-refund-22';
-import {OnlineGame} from './online.mjs?v=barracks-refund-22';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=barracks-refund-22';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=barracks-refund-22';
+import {drawRivers} from './rivers.mjs?v=sync-23';
+import {drawFlag,flagPosition} from './flags.mjs?v=sync-23';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=sync-23';
+import {drawOrnateFrame} from './frame.mjs?v=sync-23';
+import {drawParchment} from './parchment.mjs?v=sync-23';
+import {drawMountain} from './mountains.mjs?v=sync-23';
+import {drawUnit as unit} from './units.mjs?v=sync-23';
+import {drawBarracks} from './barracks.mjs?v=sync-23';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=sync-23';
+import {guideHTML} from './guide.mjs?v=sync-23';
+import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=sync-23';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=sync-23';
+import {OnlineGame} from './online.mjs?v=sync-23';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=sync-23';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=sync-23';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -203,6 +203,7 @@ window.addEventListener('hashchange',()=>{online.leave();openInvitation();});
 
 
 function receiveOnline(data,meta={event:'sync'}){
+  if(meta.closed){const copy=offlineData();loadOffline(copy);announce('Online-Raum geschlossen. Du siehst jetzt eine Offline-Kopie.');return;}
   pendingRoom=null;$('join-panel').hidden=true;
   const first=!world||world.seed!==data.world.seed||state?.players!==data.state.players;
   const previous=state;world=data.world;state=data.state;settings={...data.settings};
@@ -213,11 +214,11 @@ function receiveOnline(data,meta={event:'sync'}){
   if(action?.source!==undefined&&state.p[action.source]?.owner===data.you&&state.player===data.you&&['convert','barracks','demolishBarracks','tower','wall','demolishWall','demolishTower','flag'].includes(action.kind)){selected=action.source;if(action.kind==='convert'){type=action.conversion==='horse'?'horse':action.conversion==='archer'?'archer':'soldier';amount=Math.min(1,available(state.p[selected],type));}}
   if(data.status==='lobby')$('lobby').hidden=false;else if(wasSetup||first)$('lobby').hidden=true;$('connection').hidden=false;$('setup').hidden=true;
   $('connection-status').textContent=`Online · Du spielst ${NAMES[data.you]} · ${online.saving?`${online.pending.length} Aktion(en) werden gespeichert …`:'gespeichert'}`;
-  $('lobby-title').textContent=data.status==='lobby'?'Lobby':'Partie gespeichert';
+  $('lobby-title').textContent=data.status==='lobby'?'Lobby':'Aktuelle Onlinepartie';
   if(data.status==='lobby'||first||!$('lobby').hidden){$('lobby-seats').replaceChildren(...Array.from({length:settings.players},(_,i)=>{const seat=data.seats.find(s=>s.color===i+1),el=document.createElement('p');el.style.borderLeft=`5px solid ${COLORS[i+1]}`;el.textContent=`${NAMES[i+1]}: ${seat?seat.name:'Wartet auf Spieler …'}${i+1===data.you?' (du)':''}`;return el;}));
   $('invite-link').value=online.link;$('recovery-link').value=online.recoveryLink;
   updateLobbyControls();
-  $('lobby-count').textContent=data.status==='lobby'?`${data.seats.length} / 6 Plätze belegt. Der Spielleiter kann ab zwei Spielern starten.`:`${data.seats.length} Spieler in dieser Partie.`;
+  $('lobby-count').textContent=data.status==='lobby'?`${data.seats.length} / ${data.restoredPlayers||6} Plätze belegt. Der Spielleiter kann ab zwei Spielern starten.`:`${data.seats.length} Spieler in dieser Partie.`;
   if(!lobbyNameDirty&&document.activeElement!==$('lobby-name'))$('lobby-name').value=data.seats.find(s=>s.color===data.you)?.name||'';
   }
   status=phaseText();updateUI();$('setup').hidden=true;requestRender();
@@ -237,7 +238,7 @@ async function openInvitation(){
 $('online-create').onclick=async()=>{if(!online.configured){$('setup-status').textContent='Onlinepartien sind noch nicht eingerichtet. Lokal spielen ist möglich.';return;}const b=$('online-create');b.disabled=true;try{localStorage.setItem('orbis-name',$('player-name').value);await online.create({...settings,players:6,seed:world.seed},$('player-name').value);history.replaceState(null,'',online.link);}catch(e){$('setup-status').textContent=e.message;}finally{b.disabled=false;}};
 $('join-form').onsubmit=async e=>{e.preventDefault();const name=$('join-name').value.trim();if(!pendingRoom||!name)return;const b=$('join-submit');b.disabled=true;$('join-status').textContent='Du trittst der Lobby bei …';try{localStorage.setItem('orbis-name',name);await online.join(pendingRoom,name);}catch(error){online.leave();$('join-status').textContent=error.message;}finally{b.disabled=false;}};
 $('join-cancel').onclick=()=>{pendingRoom=null;$('join-panel').hidden=true;online.leave();history.replaceState(null,'',location.pathname+location.search);layoutSetup=null;updateUI();};
-function updateLobbyControls(){const data=online.snapshot;if(!data)return;$('lobby-start').hidden=data.status!=='lobby'||data.you!==1;$('lobby-start').disabled=data.seats.length<2||onlinePending||online.sending;$('lobby-start').textContent=onlinePending?'Bitte warten …':`Mit ${data.seats.length} Spielern starten`;$('rename-submit').disabled=onlinePending||online.sending;$('rename-submit').textContent=onlinePending?'Bitte warten …':'Namen speichern';}
+function updateLobbyControls(){const data=online.snapshot;if(!data)return;$('close-online').hidden=data.you!==1;$('close-online').disabled=online.saving||onlinePending;$('download-online').disabled=online.saving||onlinePending;$('lobby-start').dataset.required=String(data.restoredPlayers||2);$('lobby-start').hidden=data.status!=='lobby'||data.you!==1;$('lobby-start').disabled=data.seats.length<(data.restoredPlayers||2)||onlinePending||online.sending;$('lobby-start').textContent=onlinePending?'Bitte warten …':`Mit ${data.seats.length} Spielern starten`;$('rename-submit').disabled=onlinePending||online.sending;$('rename-submit').textContent=onlinePending?'Bitte warten …':'Namen speichern';}
 $('lobby-name').oninput=()=>{lobbyNameDirty=true;$('rename-status').textContent='Noch nicht gespeichert.';};
 $('rename-form').onsubmit=async e=>{e.preventDefault();const name=$('lobby-name').value.trim();if(!name||onlinePending)return;onlinePending=true;updateLobbyControls();$('rename-status').textContent='Name wird gespeichert …';try{try{await online.send('rename',{name});}catch(error){if(error.status!==409)throw error;await online.send('rename',{name});}lobbyNameDirty=false;localStorage.setItem('orbis-name',name);$('lobby-name').value=name;$('rename-status').textContent=`Gespeichert: ${name}`;}catch(error){$('rename-status').textContent=error.message;}finally{onlinePending=false;updateLobbyControls();}};
 $('lobby-start').onclick=async()=>{if(onlinePending)return;onlinePending=true;updateLobbyControls();try{await online.send('start');}catch(e){$('connection-status').textContent=e.message;}finally{onlinePending=false;updateLobbyControls();}};
@@ -257,9 +258,12 @@ function drawLakes(c){const water=new Path2D(),shore=new Path2D(),edges=new Map(
 function offlineData(){return {version:2,world,state,settings:{...settings},language:getLanguage()};}
 function loadOffline(data){validateSave(data);online.leave();world=data.world;state=data.state;settings={...settings,...data.settings};saved=data;hasGame=true;setup=false;menuOpen=false;selected=null;amount=0;operation=null;busy=null;prepareWorld();if(data.language)setLanguage(data.language);$('language').value=getLanguage();playerButtons();for(const key of ['rivers','mountains','lakes','provinces']){$(key).value=settings[key];$(`${key}-value`).textContent=settings[key];}$('connection').hidden=true;history.replaceState(null,'',location.pathname+location.search);status='Spielstand geladen.';save();updateUI();requestRender();}
 function renderSaveSlots(){const slots=listSaves();$('save-slots').replaceChildren(...slots.map(slot=>{const row=document.createElement('div');row.className='save-slot';const text=document.createElement('span');text.textContent=(slot.name||'Partie')+' \u00b7 '+new Date(slot.date).toLocaleString(getLanguage());row.append(text,button('Laden',()=>loadOffline(slot.data)),button('L\u00f6schen',()=>{deleteSave(slot.id);renderSaveSlots();},false,'danger'));return row;}));}
-$('save-offline').onclick=()=>{try{storeSave(offlineData(),$('save-name').value);renderSaveSlots();$('save-status').textContent='Gespeichert.';}catch(error){$('save-status').textContent=error.message;}};
+$('save-offline').onclick=()=>{try{downloadSave();$('save-status').textContent='Spielstand als Datei herunterladen';}catch(error){$('save-status').textContent=error.message;}};
 $('share-offline').onclick=async()=>{try{const link=await snapshotLink(offlineData());await navigator.clipboard.writeText(link);$('save-status').textContent='Momentaufnahme-Link kopiert.';}catch(error){$('save-status').textContent=error.message;}};
-$('export-offline').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(offlineData())],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='orbis-terrarum.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+function downloadSave(){if(online.saving||onlinePending)throw Error('Wait until your actions are synchronized.');const url=URL.createObjectURL(new Blob([JSON.stringify(offlineData())],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='orbis-terrarum.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$('export-offline').onclick=$('download-online').onclick=()=>{try{downloadSave();}catch(error){announce(error.message);}};
+$('close-online').onclick=async()=>{if(!confirm(getLanguage()==='de'?'Datei herunterladen und Online-Raum für alle Spieler löschen? Zur Fortsetzung die Datei laden und einen neuen Raum erstellen.':'Download a file and delete the online room for everyone? To resume, load the file and host a new room.'))return;try{downloadSave();await online.send('close');}catch(error){$('connection-status').textContent=error.message;}};
+$('host-file-online').onclick=async()=>{try{if(state.players<2)throw Error('An online game needs at least two players.');const data=offlineData();await online.create({...settings,players:6},localStorage.getItem('orbis-name')||'Host',data);history.replaceState(null,'',online.link);}catch(error){announce(error.message);}};
 $('import-offline').onclick=$('load-start').onclick=()=>$('save-file').click();
 $('save-file').onchange=async()=>{try{const file=$('save-file').files[0];if(file){if(file.size>5000000)throw Error('Spielstand ist zu gro\u00df.');loadOffline(JSON.parse(await file.text()));}}catch(error){$('save-status').textContent=error.message;$('setup-status').textContent=error.message;}finally{$('save-file').value='';}};
 function openGuide(){$('guide-content').innerHTML=guideHTML(getLanguage());$('guide').showModal();}

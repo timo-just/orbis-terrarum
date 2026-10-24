@@ -1,1 +1,1 @@
-export {guideHTML} from './rules.mjs?v=barracks-refund-22';
+export {guideHTML} from './rules.mjs?v=sync-23';

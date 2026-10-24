@@ -49,3 +49,12 @@ python tools/browser-online-check.py
 Die lokalen Onlineprüfungen brauchen kein Supabase-Konto. Sie prüfen denselben Serverdienst mit einer lokalen Datenspeicherung. Die tatsächliche Supabase-Installation muss nach Einrichtung separat geprüft werden.
 
 Offizielle Dokumentation: [Edge Functions bereitstellen](https://supabase.com/docs/guides/functions/deploy), [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+
+## Online-Synchronisation ab sync-23
+
+Realtime-Broadcast meldet lediglich Revisionen. Zustandsdaten bleiben hinter der Sitzpruefung in der Edge Function. Oeffentliche Kanaele enthalten keine Spielstaende oder Sitzschluessel. Eine Minute Kontrollintervall; bei Ausfall fuenf Sekunden, im Hintergrund dreissig Sekunden.
+
+Beide neuen Migrationen 202610240001_room_cleanup.sql und 202610240002_delta_reads.sql vor der Funktion bereitstellen. Die RPC-Funktionen sind nur fuer service_role freigegeben. Die Funktion liefert dem Browser nur den oeffentlichen Anon-Key fuer Realtime, niemals den Service-Role-Key.
+
+Dateisicherungen und Raumloeschung sowie die Kapazitaetsrechnung stehen in [CAPACITY.md](CAPACITY.md). `node tools/sync-checks.mjs` prueft Deltaaufbau und Dateifortsetzung. `node tools/network-benchmark.mjs` erzeugt die reproduzierbare Verbrauchsschaetzung. Cloud-QA: `python tools/live-sync-check.py`, `python tools/parallel-sync-check.py` und `python tools/browser-online-check.py --cloud` (legt temporaere Raeume an und loescht sie anschliessend).
