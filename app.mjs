@@ -1,16 +1,16 @@
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=stonework-16';
-import {drawOrnateFrame} from './frame.mjs?v=stonework-16';
-import {drawParchment} from './parchment.mjs?v=stonework-16';
-import {drawMountain} from './mountains.mjs?v=stonework-16';
-import {drawUnit as unit} from './units.mjs?v=stonework-16';
-import {drawBarracks} from './barracks.mjs?v=stonework-16';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=stonework-16';
-import {guideHTML} from './guide.mjs?v=stonework-16';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=stonework-16';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=stonework-16';
-import {OnlineGame} from './online.mjs?v=stonework-16';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=stonework-16';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=stonework-16';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=map-sheet-17';
+import {drawOrnateFrame} from './frame.mjs?v=map-sheet-17';
+import {drawParchment} from './parchment.mjs?v=map-sheet-17';
+import {drawMountain} from './mountains.mjs?v=map-sheet-17';
+import {drawUnit as unit} from './units.mjs?v=map-sheet-17';
+import {drawBarracks} from './barracks.mjs?v=map-sheet-17';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=map-sheet-17';
+import {guideHTML} from './guide.mjs?v=map-sheet-17';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=map-sheet-17';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=map-sheet-17';
+import {OnlineGame} from './online.mjs?v=map-sheet-17';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=map-sheet-17';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=map-sheet-17';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -87,10 +87,10 @@ function drawPieces(g){if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.
 function render(time){framePending=false;ctx.setTransform(DPR,0,0,DPR,-viewport.left*DPR,-viewport.top*DPR);ctx.clearRect(viewport.left,viewport.top,W,H);drawOcean(ctx);
   if(!world||!state)return;const previousBattleCount=battles.length;battles=battles.filter(b=>time-b.start<b.duration);if(battles.length!==previousBattleCount)dirty=true;if(battles.length)requestRender();if(busy){busy.progress=Math.min(1,(time-busy.start)/busy.duration);if(busy.progress>=1){busy=null;dirty=true;}else if(busy.kind==='volley')dirty=true;}
   if(dirty){drawScene();dirty=false;}
-  ctx.save();ctx.translate(mapCenter.x+pan.x,mapCenter.y+pan.y);ctx.scale(mapSize*zoom/S,mapSize*zoom/S);ctx.drawImage(scene,-mapOrigin.x*S,-mapOrigin.y*S);ctx.translate(-mapOrigin.x*S,-mapOrigin.y*S);drawPieces(ctx);drawBattles(ctx,battles,time,COLORS,unit,piecePositions,S);ctx.restore();
+  ctx.save();const sheet=paperRect();ctx.beginPath();ctx.rect(sheet.x+15*zoom,sheet.y+15*zoom,sheet.w-30*zoom,sheet.h-30*zoom);ctx.clip();ctx.save();ctx.translate(mapCenter.x+pan.x,mapCenter.y+pan.y);ctx.scale(mapSize*zoom/S,mapSize*zoom/S);ctx.drawImage(scene,-mapOrigin.x*S,-mapOrigin.y*S);ctx.translate(-mapOrigin.x*S,-mapOrigin.y*S);drawPieces(ctx);drawBattles(ctx,battles,time,COLORS,unit,piecePositions,S);ctx.restore();
   if(busy){if(busy.kind==='move'){const from=worldToScreen(world.provinces[busy.action.source].home),to=worldToScreen(world.provinces[busy.action.target].home),t=busy.progress;ctx.strokeStyle=COLORS[busy.owner];ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();const n=Math.max(1,busy.action.amount),rows=Math.min(5,n),cols=Math.ceil(n/rows),r=2.8*mapSize*zoom/S;for(let i=0;i<n;i++)unit(ctx,busy.action.type,from.x+(to.x-from.x)*t+(Math.floor(i/rows)-(cols-1)/2)*r*2.5,from.y+(to.y-from.y)*t+(i%rows-(rows-1)/2)*r*1.15,COLORS[busy.owner],0,r);}
     else busy.shots.forEach((shot,i)=>{const start=shot.tower===null?world.provinces[shot.source].home:towerPoint({province:shot.source,corner:shot.tower}),from=worldToScreen(start),to=worldToScreen(world.provinces[shot.target].home),impact=.55+(i%6)*.06,t=busy.progress/impact;if(t<1){const x=from.x+(to.x-from.x)*t,y=from.y+(to.y-from.y)*t-Math.sin(t*Math.PI)*25;ctx.strokeStyle='#384654';ctx.fillStyle='#384654';if(shot.arrow){ctx.beginPath();ctx.moveTo(x-4,y+3);ctx.lineTo(x+4,y-3);ctx.stroke();}else{ctx.beginPath();ctx.arc(x,y,2.3,0,Math.PI*2);ctx.fill();}}else{const phase=(busy.progress-impact)/.18;if(phase<1){ctx.fillStyle=`rgba(255,205,91,${1-phase})`;ctx.beginPath();ctx.arc(to.x,to.y,3+phase*13,0,Math.PI*2);ctx.fill();}}});requestRender();
-  }else if($('end-turn').disabled&&state.pool===0)updateUI();if(zoom<=1.001)drawFrame(ctx);
+  }else if($('end-turn').disabled&&state.pool===0)updateUI();ctx.restore();drawFrame(ctx);
 }
 function targets(){if(selected===null||!operation)return [];const kind=operation==='buildWall'?'wall':operation==='demolishWall'?'demolishWall':operation==='buildTower'?'tower':'demolishTower';return (kind.includes('ower')?world.corners.map((_,i)=>i):state.links[selected].map(l=>l.target)).filter(target=>legal(state,{kind,source:selected,target}));}
 function announce(text){status=text;updateUI();requestRender();}
@@ -245,9 +245,9 @@ for(const [id,target] of [['copy-invite','invite-link'],['copy-recovery','recove
 $('leave-online').onclick=()=>{if(online.saving){$('connection-status').textContent='Bitte kurz warten, bis deine Aktionen gespeichert sind.';return;}online.leave();onlinePending=false;hasGame=false;menuOpen=false;history.replaceState(null,'',location.pathname+location.search);$('lobby').hidden=true;$('connection').hidden=true;setup=true;layoutSetup=null;regenerate();};
 window.addEventListener('beforeunload',event=>{if(online.saving){event.preventDefault();event.returnValue='';}});
 
-function paperRect(){return {x:mapCenter.x-mapBounds.w*mapSize/2-21,y:mapCenter.y-mapBounds.h*mapSize/2-21,w:mapBounds.w*mapSize+42,h:mapBounds.h*mapSize+42};}
-function drawOcean(c){const r=paperRect(),full=zoom>1.001,key=[W,H,DPR,r.w,r.h,full].join(':');if(oceanKey!==key){ocean.width=Math.ceil(W*DPR);ocean.height=Math.ceil(H*DPR);const q=ocean.getContext('2d');q.scale(DPR,DPR);q.fillStyle='#c7b596';q.fillRect(0,0,W,H);q.save();if(!full){q.beginPath();q.rect(r.x-viewport.left,r.y-viewport.top,r.w,r.h);q.clip();}if(full)drawParchment(q,W,H);else{q.translate(r.x-viewport.left,r.y-viewport.top);drawParchment(q,r.w,r.h);}q.restore();oceanKey=key;}c.drawImage(ocean,viewport.left,viewport.top,W,H);}
-function drawFrame(c){const r=paperRect();drawOrnateFrame(c,r.x,r.y,r.w,r.h);}
+function paperRect(){const w=(mapBounds.w*mapSize+42)*zoom,h=(mapBounds.h*mapSize+42)*zoom;return {x:mapCenter.x+pan.x-w/2,y:mapCenter.y+pan.y-h/2,w,h};}
+function drawOcean(c){const r=paperRect(),w=mapBounds.w*mapSize+42,h=mapBounds.h*mapSize+42,key=[w,h,DPR].join(':');if(oceanKey!==key){ocean.width=Math.ceil(w*DPR);ocean.height=Math.ceil(h*DPR);const q=ocean.getContext('2d');q.scale(DPR,DPR);drawParchment(q,w,h);oceanKey=key;}c.fillStyle='#c7b596';c.fillRect(viewport.left,viewport.top,W,H);c.drawImage(ocean,r.x,r.y,r.w,r.h);}
+function drawFrame(c){const r=paperRect();c.save();c.translate(r.x,r.y);c.scale(zoom,zoom);drawOrnateFrame(c,0,0,r.w/zoom,r.h/zoom);c.restore();}
 function drawLakes(c){const water=new Path2D(),shore=new Path2D(),edges=new Map();world.lakeCells.forEach(cell=>{water.addPath(polyPath(cell));cell.forEach((a,i)=>{const b=cell[(i+1)%cell.length],key=[`${a.x.toFixed(6)},${a.y.toFixed(6)}`,`${b.x.toFixed(6)},${b.y.toFixed(6)}`].sort().join(':');if(edges.has(key))edges.delete(key);else edges.set(key,[a,b]);});});for(const [a,b] of edges.values()){shore.moveTo(a.x*S,a.y*S);shore.lineTo(b.x*S,b.y*S);}c.fillStyle='#75b7b5';c.fill(water);c.save();c.clip(water);c.lineWidth=10;c.strokeStyle='#b5d7c4';c.stroke(shore);c.lineWidth=2;c.strokeStyle='#e4e2ba';c.stroke(shore);c.lineWidth=.9;c.strokeStyle='#eff4db99';for(let y=12;y<S;y+=38)for(let x=8;x<S;x+=58){c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+9,y+3,x+18,y);c.stroke();}c.restore();c.lineWidth=2;c.strokeStyle='#e3d9aa';c.stroke(shore);}
 function offlineData(){return {version:2,world,state,settings:{...settings},language:getLanguage()};}
 function loadOffline(data){validateSave(data);online.leave();world=data.world;state=data.state;settings={...settings,...data.settings};saved=data;hasGame=true;setup=false;menuOpen=false;selected=null;amount=0;operation=null;busy=null;prepareWorld();if(data.language)setLanguage(data.language);$('language').value=getLanguage();playerButtons();for(const key of ['rivers','mountains','lakes','provinces']){$(key).value=settings[key];$(`${key}-value`).textContent=settings[key];}$('connection').hidden=true;history.replaceState(null,'',location.pathname+location.search);status='Spielstand geladen.';save();updateUI();requestRender();}
