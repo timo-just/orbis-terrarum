@@ -1,11 +1,11 @@
-import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=controls-8';
-import {guideHTML} from './guide.mjs?v=controls-8';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=controls-8';
-import {makeBattle,drawBattles} from './combat.mjs?v=controls-8';
-import {OnlineGame} from './online.mjs?v=controls-8';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=controls-8';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=controls-8';
-import {ICONS} from './icons.mjs';
+import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=combat-9';
+import {guideHTML} from './guide.mjs?v=combat-9';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=combat-9';
+import {makeBattle,drawBattles} from './combat.mjs?v=combat-9';
+import {OnlineGame} from './online.mjs?v=combat-9';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=combat-9';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=combat-9';
+import {ICONS} from './icons.mjs?v=combat-9';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -28,7 +28,7 @@ function icon(context,name,x,y,width,color=null){const asset=ICONS[name],height=
   });context.restore();
 }
 function unit(context,t,x,y,color,stage=0,r=5.2,gold=false){const grey='#848b93';if(stage===2)color=grey;context.save();context.fillStyle='#f6f4df';context.strokeStyle=gold?'#ffd45b':'#263c4e';context.lineWidth=gold?1.8:.55;context.beginPath();context.arc(x,y,r*1.16,0,Math.PI*2);context.fill();context.stroke();
- if(t==='soldier'){context.fillStyle=color;context.beginPath();context.arc(x,y,r,0,Math.PI*2);context.fill();context.strokeStyle='#fff9df';context.lineWidth=r*.27;context.lineCap='round';context.beginPath();context.moveTo(x-r*.46,y+r*.47);context.lineTo(x+r*.45,y-r*.55);context.moveTo(x-r*.5,y+r*.04);context.lineTo(x-r*.08,y+r*.45);context.stroke();context.strokeStyle='#263c4e';context.lineWidth=.7;context.beginPath();context.moveTo(x-r*.52,y+r*.52);context.lineTo(x-r*.33,y+r*.31);context.stroke();}
+ if(t==='soldier'){context.fillStyle=color;context.beginPath();context.arc(x,y,r,0,Math.PI*2);context.fill();icon(context,'sword',x,y,r*1.85);}
  else{icon(context,t,x,y,r*2.08,color);if(stage===1){context.beginPath();context.rect(x,y-r*1.8,r*1.8,r*3.6);context.clip();icon(context,t,x,y,r*2.08,grey);}}context.restore();}
 
 function screenToWorld(x,y){return {x:.5+(x-mapCenter.x-pan.x)/(mapSize*zoom),y:.5+(y-mapCenter.y-pan.y)/(mapSize*zoom)};}

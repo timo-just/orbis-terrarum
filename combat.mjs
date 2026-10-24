@@ -8,10 +8,11 @@ const mix=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
 const clamp=t=>Math.max(0,Math.min(1,t));
 export function drawBattles(g,battles,time,colors,drawUnit,positions,S){
  for(const b of battles){const t=clamp((time-b.start)/b.duration),side={x:-b.axis.y,y:b.axis.x},{action:a}=b;
-  const formation=(base,i,n,dir)=>({x:base.x+side.x*((i%7)-Math.min(6,n-1)/2)*.009+b.axis.x*Math.floor(i/7)*.009*dir,y:base.y+side.y*((i%7)-Math.min(6,n-1)/2)*.009+b.axis.y*Math.floor(i/7)*.009*dir});
+  const laneCount=Math.max(a.amount,b.old.soldier+b.old.horse+b.old.archer);
+  const formation=(base,i,n,dir)=>({x:base.x+side.x*((i%7)-Math.min(6,laneCount-1)/2)*.009+b.axis.x*Math.floor(i/7)*.009*dir,y:base.y+side.y*((i%7)-Math.min(6,laneCount-1)/2)*.009+b.axis.y*Math.floor(i/7)*.009*dir});
   const end=(type,i)=>positions.get(a.target)?.[type]?.[i+(b.enemy?0:b.old[type])]||{x:b.to.x+(i%5-2)*.006,y:b.to.y+Math.floor(i/5)*.006};
-  function actor(type,i,n,attacker,dead){
-    const base={x:b.mid.x+b.axis.x*(attacker?.018:.065),y:b.mid.y+b.axis.y*(attacker?.018:.065)},line=formation(base,i,n,attacker?-1:1),collision={x:b.mid.x+b.axis.x*.041+side.x*((i%7)-3)*.009,y:b.mid.y+b.axis.y*.041+side.y*((i%7)-3)*.009};let p;
+  function actor(type,i,n,attacker,dead,slot=i){
+    const base={x:b.mid.x+b.axis.x*(attacker?.018:.065),y:b.mid.y+b.axis.y*(attacker?.018:.065)},line=formation(base,slot,n,attacker?-1:1),collision={x:b.mid.x+b.axis.x*.041+side.x*((slot%7)-Math.min(6,laneCount-1)/2)*.009,y:b.mid.y+b.axis.y*.041+side.y*((slot%7)-Math.min(6,laneCount-1)/2)*.009};let p;
     if(!b.enemy){const u=clamp(t*1.3-i/Math.max(1,n)*.25);p=u<.5?mix(b.from,b.mid,u*2):mix(b.mid,end(type,i),(u-.5)*2);}
     else if(t<.28){if(attacker){const delay=.06*i/Math.max(1,n-1),u=clamp((t-delay)/(.28-delay));p=u<.5?mix(b.from,b.mid,u*2):mix(b.mid,line,(u-.5)*2);}else p=mix(b.to,line,clamp(t/.28));}
     else if(t<.42)p=line;
@@ -21,6 +22,6 @@ export function drawBattles(g,battles,time,colors,drawUnit,positions,S){
     drawUnit(g,type,p.x*S,p.y*S,colors[attacker?b.owner:b.defender],0,5.2,false);
   }
   for(let i=0;i<a.amount;i++)actor(a.type,i,a.amount,true,i>=b.survivors);
-  if(b.enemy){let i=0;const n=b.old.soldier+b.old.horse+b.old.archer;for(const type of ['soldier','horse','archer'])for(let j=0;j<b.old[type];j++,i++)actor(type,j,n,false,i<b.defenderDead);}
+  if(b.enemy){let i=0;const n=b.old.soldier+b.old.horse+b.old.archer;for(const type of ['soldier','horse','archer'])for(let j=0;j<b.old[type];j++,i++)actor(type,j,n,false,i<b.defenderDead,i);}
  }
 }
