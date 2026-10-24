@@ -1,5 +1,5 @@
 import {ONLINE_URL} from './online-config.mjs';
-import {apply,chooseStart,undoOwner} from './engine.mjs?v=courtyard-11';
+import {apply,chooseStart,undoOwner} from './engine.mjs?v=landscape-12';
 const advance=(state,action)=>action.kind==='draft'?chooseStart(state,action.source):apply(state,action);
 export class OnlineGame {
   constructor(onUpdate,onError){this.onUpdate=onUpdate;this.onError=onError;this.room=null;this.snapshot=null;this.confirmed=null;this.sending=false;this.timer=null;this.pending=[];this.batch=null;this.flushTimer=null;this.flushing=false;this.retryDelay=500;this.epoch=0;}
