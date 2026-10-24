@@ -1,17 +1,18 @@
-import {drawFlag,flagPosition} from './flags.mjs?v=banner-19';
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=banner-19';
-import {drawOrnateFrame} from './frame.mjs?v=banner-19';
-import {drawParchment} from './parchment.mjs?v=banner-19';
-import {drawMountain} from './mountains.mjs?v=banner-19';
-import {drawUnit as unit} from './units.mjs?v=banner-19';
-import {drawBarracks} from './barracks.mjs?v=banner-19';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=banner-19';
-import {guideHTML} from './guide.mjs?v=banner-19';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=banner-19';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=banner-19';
-import {OnlineGame} from './online.mjs?v=banner-19';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=banner-19';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=banner-19';
+import {drawRivers} from './rivers.mjs?v=rivers-20';
+import {drawFlag,flagPosition} from './flags.mjs?v=rivers-20';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=rivers-20';
+import {drawOrnateFrame} from './frame.mjs?v=rivers-20';
+import {drawParchment} from './parchment.mjs?v=rivers-20';
+import {drawMountain} from './mountains.mjs?v=rivers-20';
+import {drawUnit as unit} from './units.mjs?v=rivers-20';
+import {drawBarracks} from './barracks.mjs?v=rivers-20';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=rivers-20';
+import {guideHTML} from './guide.mjs?v=rivers-20';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=rivers-20';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=rivers-20';
+import {OnlineGame} from './online.mjs?v=rivers-20';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=rivers-20';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=rivers-20';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -69,13 +70,14 @@ function drawScene(){g.clearRect(0,0,S,S);const owners=displayOwners(state,battl
   drawLakes(g);
   world.coast.forEach(e=>{drawLine(g,e.a,e.b,5,'#d4d2a6');drawLine(g,e.a,e.b,1.7,'#eff5db');});
   g.save();const landClip=new Path2D();paths.forEach(path=>landClip.addPath(path));g.clip(landClip);
-  world.edges.forEach(e=>{if(e.river){drawLine(g,e.a,e.b,7,'#eef9fc');drawLine(g,e.a,e.b,4.8,'#237ec5');drawLine(g,e.a,e.b,1.6,'#83d5f2');}else if(e.mountain){
+  world.edges.forEach(e=>{if(e.river){}else if(e.mountain){
     drawMountain(g,e,paths,S);
   }});
   g.restore();
+  g.save();const riverClip=new Path2D();paths.forEach(path=>riverClip.addPath(path));g.clip(riverClip);drawRivers(g,world.edges,S);g.restore();
   terrainContext.clearRect(0,0,S,S);terrainContext.drawImage(scene,0,0);terrainKey=nextTerrainKey;}
 }
-function drawPieces(g){if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.shadow);g.fillStyle='#357747';g.fill(vegetation.leaves);g.fillStyle='#50894a';g.fill(vegetation.mid);g.fillStyle='#77a55d';g.fill(vegetation.light);g.strokeStyle='#b7ce9670';g.lineWidth=.8;g.stroke(vegetation.grass);}g.save();const clip=new Path2D();paths.forEach(path=>clip.addPath(path));g.clip(clip);world.edges.forEach(e=>{if(e.river){drawLine(g,e.a,e.b,7,'#eef9fc');drawLine(g,e.a,e.b,4.8,'#237ec5');drawLine(g,e.a,e.b,1.6,'#83d5f2');}});g.restore();g.strokeStyle='#f6fbf0';g.lineWidth=1.1;paths.forEach(path=>g.stroke(path));
+function drawPieces(g){if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.shadow);g.fillStyle='#357747';g.fill(vegetation.leaves);g.fillStyle='#50894a';g.fill(vegetation.mid);g.fillStyle='#77a55d';g.fill(vegetation.light);g.strokeStyle='#b7ce9670';g.lineWidth=.8;g.stroke(vegetation.grass);}g.save();const clip=new Path2D();paths.forEach(path=>clip.addPath(path));g.clip(clip);g.restore();g.strokeStyle='#f6fbf0';g.lineWidth=1.1;paths.forEach(path=>g.stroke(path));g.save();const riverClip=new Path2D();paths.forEach(path=>riverClip.addPath(path));g.clip(riverClip);drawRivers(g,world.edges,S);g.restore();
   state.walls.forEach(key=>{const [a,b]=key.split(':').map(Number),edge=edgeFor(a,b);if(!edge)return;g.save();g.clip(paths.get(a));drawJoinedWall(g,joinedWall(edge,a),COLORS[state.p[a].owner],S);g.restore();});
   if(selected!==null){g.strokeStyle='#fff';g.lineWidth=4;g.stroke(paths.get(selected));}
   const obstacles=state.p.map(()=>[]);

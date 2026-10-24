@@ -1,4 +1,4 @@
-import {rng} from './world.mjs?v=banner-19';
+import {rng} from './world.mjs?v=rivers-20';
 // Procedural paper, drawn once per viewport size and cached by the map renderer.
 export function drawParchment(g,w,h){
  const random=rng(92741),gradient=g.createRadialGradient(w*.46,h*.42,0,w*.5,h*.5,Math.hypot(w,h)*.6);

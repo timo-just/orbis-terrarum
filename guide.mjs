@@ -1,1 +1,1 @@
-export {guideHTML} from './rules.mjs?v=banner-19';
+export {guideHTML} from './rules.mjs?v=rivers-20';
