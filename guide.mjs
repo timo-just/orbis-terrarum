@@ -1,1 +1,1 @@
-export {guideHTML} from './rules.mjs?v=cloudflare-24';
+export {guideHTML} from './rules.mjs?v=ai-25';

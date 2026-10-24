@@ -1,6 +1,7 @@
 let language='en';try{language=localStorage.getItem('orbis-language')==='de'?'de':'en';}catch{}
 export const getLanguage=()=>language;
 const pairs={
+'Spielmodus':'Game mode','Offline gegen Menschen':'Offline vs people','Offline gegen KI':'Offline vs AI','Online Lobby':'Online lobby',
 'Aktuelle Onlinepartie':'Current online game',
 'Spielstand als Datei herunterladen':'Download save file',
 'Datei herunterladen und Online-Raum schließen':'Download file & close online room',

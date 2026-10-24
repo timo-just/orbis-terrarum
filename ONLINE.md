@@ -51,7 +51,7 @@ Die lokalen Onlineprüfungen brauchen kein Supabase-Konto. Sie prüfen denselben
 Offizielle Dokumentation: [Edge Functions bereitstellen](https://supabase.com/docs/guides/functions/deploy), [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
 
-## Online-Synchronisation ab cloudflare-24
+## Online-Synchronisation ab ai-25
 
 Realtime-Broadcast meldet lediglich Revisionen. Zustandsdaten bleiben hinter der Sitzpruefung in der Edge Function. Oeffentliche Kanaele enthalten keine Spielstaende oder Sitzschluessel. Eine Minute Kontrollintervall; bei Ausfall fuenf Sekunden, im Hintergrund dreissig Sekunden.
 

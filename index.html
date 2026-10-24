@@ -7,7 +7,7 @@
   <meta name="description" content="Orbis Terrarum: rundenbasierte Eroberung auf zufälligen Voronoi-Karten. Für ein bis sechs Menschen an einem Bildschirm.">
   <title>Orbis Terrarum</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=cloudflare-24">
+  <link rel="stylesheet" href="./style.css?v=ai-25">
 </head>
 <body>
   <main id="game" aria-label="Orbis Terrarum">
@@ -22,6 +22,7 @@
       <h1>Orbis Terrarum</h1>
       <p class="subtitle">Eine Welt. Eure Entscheidungen.</p>
       <label class="language-label" for="language">Sprache / Language <select id="language"><option value="de">Deutsch</option><option value="en">English</option></select></label>
+      <label for="game-mode">Spielmodus <select id="game-mode"><option value="human">Offline gegen Menschen</option><option value="ai">Offline gegen KI</option><option value="online">Online Lobby</option></select></label><p id="mode-help" class="hint"></p>
       <fieldset><legend>Spielerzahl</legend><div id="players" class="six"></div></fieldset>
       <p class="hint">Gemeinsam an einem Bildschirm · 1 Spieler = Übungsmodus</p>
       <div class="sliders">
@@ -83,6 +84,6 @@
     <dialog id="guide"><h2>Anleitung</h2><div id="guide-content"></div><button id="guide-close">Schließen</button></dialog>
     <noscript>Für Orbis Terrarum muss JavaScript aktiviert sein.</noscript>
   </main>
-  <script type="module" src="./app.mjs?v=cloudflare-24"></script>
+  <script type="module" src="./app.mjs?v=ai-25"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ import {validateSave} from './offline.mjs';
 const fail=(message,status=400)=>{const e=Error(message);e.status=status;throw e;};
 const validId=s=>typeof s==='string'&&/^[a-f0-9-]{36}$/.test(s);
 const nameOf=s=>typeof s==='string'&&s.trim()?s.trim().slice(0,28):'Spieler';
-export function createRoomService(store,cryptoApi=globalThis.crypto){
+export function createRoomService(store,cryptoApi=globalThis.crypto,random=Math.random){
   async function hash(token){const data=await cryptoApi.subtle.digest('SHA-256',new TextEncoder().encode(token));return Array.from(new Uint8Array(data),b=>b.toString(16).padStart(2,'0')).join('');}
   function view(row,you,compact=false,revision=-1,deltaMode=false){
     const {seats,recentRequests=[],recentChanges=[],...snapshot}=row.snapshot;
@@ -27,6 +27,7 @@ export function createRoomService(store,cryptoApi=globalThis.crypto){
     if(kind==='create'){
       await store.cleanup?.();
       const opts=input.settings||{},settings={};for(const [key,min,max] of [['players',2,6],['rivers',0,8],['mountains',0,10],['lakes',0,12]]){const v=opts[key];if(!Number.isInteger(v)||v<min||v>max)fail('Ungültige Karteneinstellungen.');settings[key]=v;}
+      if(Number.isInteger(opts.starter)&&opts.starter>=1&&opts.starter<=6)settings.starter=opts.starter;
       if(Number.isSafeInteger(opts.seed)&&opts.seed>=0)settings.seed=opts.seed;
       settings.provinces=opts.provinces??100;if(!Number.isInteger(settings.provinces)||settings.provinces<40||settings.provinces>200)fail('Ungültige Provinzanzahl.');
       settings.players=6;
@@ -58,7 +59,7 @@ export function createRoomService(store,cryptoApi=globalThis.crypto){
           if(row.snapshot.status!=='lobby'||row.snapshot.seats.length<2)fail('Zum Starten werden mindestens zwei Spieler benötigt.');
           next.snapshot.settings.players=next.snapshot.seats.length;
           if(next.snapshot.restoredPlayers&&next.snapshot.seats.length!==next.snapshot.restoredPlayers)fail(`This save needs ${next.snapshot.restoredPlayers} players.`);
-          if(!next.snapshot.restoredPlayers)next.snapshot.state=createState(next.snapshot.world,next.snapshot.seats.length);
+          if(!next.snapshot.restoredPlayers)next.snapshot.state=createState(next.snapshot.world,next.snapshot.seats.length,(next.snapshot.settings.starter?((next.snapshot.settings.starter-1)%next.snapshot.seats.length)+1:1+Math.floor(random()*next.snapshot.seats.length)));
           next.snapshot.status='play';
         }else if(kind==='close'){
           if(color!==1)fail('Only the host can close the room.',403);
