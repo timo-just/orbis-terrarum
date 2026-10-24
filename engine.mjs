@@ -36,6 +36,7 @@ export function legal(s,a) {
   if(!own)return false;
   if(a.kind==='convert')return ({horse:p.soldier>=3,archer:p.soldier>=5,footHorse:p.horse>=1,footArcher:p.archer>=1})[a.conversion]===true;
   if(a.kind==='shoot')return Number.isInteger(a.amount)&&a.amount>0&&a.amount<=available(p,'archer')&&s.links[a.source].some(l=>l.target===a.target)&&s.p[a.target].owner>0&&s.p[a.target].owner!==s.player&&total(s.p[a.target])>0;
+  if(a.kind==='demolishBarracks')return p.barracks===true;
   if(a.kind==='barracks')return !p.barracks&&p.soldier>=10;
   if(a.kind==='flag')return s.flags[s.player]>=0&&s.flags[s.player]!==a.source&&p.soldier>=10;
   if(a.kind==='tower'||a.kind==='demolishTower')return s.corners[a.target]?.includes(a.source)&&
@@ -77,6 +78,7 @@ function applyRaw(s,a) {
     const [from,to,cost,produced]=({horse:['soldier','horse',3,1],archer:['soldier','archer',5,1],footHorse:['horse','soldier',1,2],footArcher:['archer','soldier',1,3]})[a.conversion];
     const b=remove(p,from,cost);add(p,to,produced,b[1]===0&&b[0]>0?produced:0,b[1]>0?produced:0);return n;
   }
+  if(a.kind==='demolishBarracks'){p.barracks=false;add(p,'soldier',5,0,5);return n;}
   if(a.kind==='barracks'){spend(p,10);p.barracks=true;return n;}
   if(a.kind==='flag'){spend(p,10);n.flags[s.player]=a.source;return n;}
   if(a.kind==='wall'){spend(p,5);n.walls.push(wallKey(a.source,a.target));return n;}

@@ -1,18 +1,18 @@
-import {drawRivers} from './rivers.mjs?v=rivers-20';
-import {drawFlag,flagPosition} from './flags.mjs?v=rivers-20';
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=rivers-20';
-import {drawOrnateFrame} from './frame.mjs?v=rivers-20';
-import {drawParchment} from './parchment.mjs?v=rivers-20';
-import {drawMountain} from './mountains.mjs?v=rivers-20';
-import {drawUnit as unit} from './units.mjs?v=rivers-20';
-import {drawBarracks} from './barracks.mjs?v=rivers-20';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=rivers-20';
-import {guideHTML} from './guide.mjs?v=rivers-20';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=rivers-20';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=rivers-20';
-import {OnlineGame} from './online.mjs?v=rivers-20';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=rivers-20';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=rivers-20';
+import {drawRivers} from './rivers.mjs?v=barracks-refund-22';
+import {drawFlag,flagPosition} from './flags.mjs?v=barracks-refund-22';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=barracks-refund-22';
+import {drawOrnateFrame} from './frame.mjs?v=barracks-refund-22';
+import {drawParchment} from './parchment.mjs?v=barracks-refund-22';
+import {drawMountain} from './mountains.mjs?v=barracks-refund-22';
+import {drawUnit as unit} from './units.mjs?v=barracks-refund-22';
+import {drawBarracks} from './barracks.mjs?v=barracks-refund-22';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=barracks-refund-22';
+import {guideHTML} from './guide.mjs?v=barracks-refund-22';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=barracks-refund-22';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=barracks-refund-22';
+import {OnlineGame} from './online.mjs?v=barracks-refund-22';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=barracks-refund-22';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=barracks-refund-22';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -105,7 +105,7 @@ function commit(action){if(online.room){sendOnlineAction(action);return;}try{con
     if(['pass','shoot'].includes(action.kind)&&state.lastShots.length)busy={kind:'volley',shots:state.lastShots,progress:0,start:performance.now(),duration:1100/speed};
     status=action.kind==='deploy'?(state.pool?phaseText():'Nachschub verteilt. Bewegung, Bau und Umtausch sind frei.'):phaseText();
     if(action.kind==='convert'){selected=action.source;type=action.conversion==='horse'?'horse':action.conversion==='archer'?'archer':'soldier';amount=Math.min(1,available(state.p[selected],type));status='Einheiten getauscht. Verbrauchte Bewegung bleibt erhalten.';}
-    if(['barracks','wall','demolishWall','tower','demolishTower','flag'].includes(action.kind)){selected=action.source;status={barracks:'Kaserne gebaut. Zwei Nachschubpunkte pro Zug.',wall:'Mauer gebaut. Fluss und Mauer zusammen vierteln die Angriffskraft.',demolishWall:'Mauer abgerissen: zwei Soldaten zurück.',tower:'Grenzturm gebaut. Ein Schuss pro eigenem Zug.',demolishTower:'Grenzturm abgerissen: zwei Soldaten zurück.',flag:'Fahne verlegt.'}[action.kind];}
+    if(['barracks','demolishBarracks','wall','demolishWall','tower','demolishTower','flag'].includes(action.kind)){selected=action.source;status={demolishBarracks:'Kaserne abgerissen: fünf Soldaten zurück.',barracks:'Kaserne gebaut. Zwei Nachschubpunkte pro Zug.',wall:'Mauer gebaut. Fluss und Mauer zusammen vierteln die Angriffskraft.',demolishWall:'Mauer abgerissen: zwei Soldaten zurück.',tower:'Grenzturm gebaut. Ein Schuss pro eigenem Zug.',demolishTower:'Grenzturm abgerissen: zwei Soldaten zurück.',flag:'Fahne verlegt.'}[action.kind];}
     if(action.kind==='move'){const lost=previous.flags.findIndex((flag,id)=>id>0&&flag>=0&&state.flags[id]===-2);if(lost>0)status=`Fahne von ${NAMES[lost]} erobert: Alle Provinzen und Gebäude übernommen, gegnerische Einheiten entfernt.`;}
     save();updateUI();requestRender();
   }catch(error){announce(error.message);}}
@@ -131,6 +131,7 @@ function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!se
   const conversions=[['horse','3 S → 1 Reiter'],['footHorse','1 Reiter → 2 S'],['archer','5 S → 1 Bogen'],['footArcher','1 Bogen → 3 S']];
   $('conversions').replaceChildren(...conversions.map(([conversion,label])=>button(label,()=>commit({kind:'convert',source:selected,conversion}),!own||!legal(state,{kind:'convert',source:selected,conversion}))));
   const build=$('build-panel');build.replaceChildren();if(own){const p=state.p[selected];build.append(button(p.barracks?'Kaserne gebaut':'Kaserne · 10',()=>commit({kind:'barracks',source:selected}),!legal(state,{kind:'barracks',source:selected})),button(operation==='buildWall'?'Abbrechen':'Mauer · 5',()=>chooseOperation('buildWall'),!state.links[selected].some(l=>legal(state,{kind:'wall',source:selected,target:l.target}))),button(operation==='buildTower'?'Abbrechen':'Grenzturm · 5',()=>chooseOperation('buildTower'),!state.corners.some((_,target)=>legal(state,{kind:'tower',source:selected,target}))),button(state.flags[state.player]===selected?'Fahne steht hier':'Fahne hierher · 10',()=>commit({kind:'flag',source:selected}),!legal(state,{kind:'flag',source:selected})));
+    if(p.barracks)build.append(button('Kaserne abreißen · +5',()=>commit({kind:'demolishBarracks',source:selected}),!legal(state,{kind:'demolishBarracks',source:selected}), 'danger'));
     if(state.walls.some(w=>w.startsWith(`${selected}:`)))build.append(button(operation==='demolishWall'?'Abbrechen':'Mauer abreißen · +2',()=>chooseOperation('demolishWall'),false,'danger'));
     if(state.towers.some(t=>t.province===selected))build.append(button(operation==='demolishTower'?'Abbrechen':'Turm abreißen · +2',()=>chooseOperation('demolishTower'),false,'danger'));
   }
@@ -186,8 +187,9 @@ $('amount').oninput=()=>{amount=Number($('amount').value);updateUI();requestRend
 $('end-turn').onclick=()=>commit({kind:'pass'});$('undo').onclick=()=>commit({kind:'undo',player:online.room?online.color:undoOwner(state)});
 function toggleMenu(){if(!hasGame)return;renderSaveSlots();menuOpen=!menuOpen;if(online.snapshot&&menuOpen)receiveOnline(online.snapshot);updateUI();requestRender();}
 $('menu').onclick=toggleMenu;
-$('new-game').onclick=()=>{menuOpen=true;updateUI();};
-$('prepare-new-game').onclick=()=>{menuOpen=false;hasGame=false;setup=true;clearSelection();regenerate();};
+function prepareNewGame(){menuOpen=false;hasGame=false;setup=true;busy=null;battles=[];deployAmount=1;clearSelection();updateUI();regenerate();}
+$('new-game').onclick=prepareNewGame;
+$('prepare-new-game').onclick=prepareNewGame;
 
 function prepareWorld(){const vertices=[...world.provinces.flatMap(p=>p.cell),...world.lakeCells.flat()],xs=vertices.map(p=>p.x),ys=vertices.map(p=>p.y);mapBounds={x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};mapOrigin={x:mapBounds.x+mapBounds.w/2,y:mapBounds.y+mapBounds.h/2};oceanKey='';flagPositions.clear();fortPositions.clear();deployAmount=1;battles=[];piecePositions.clear();fitCamera=true;terrainKey='';controlsCache=null;factionsKey='';paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));vegetation=makeVegetation();zoom=1;pan={x:0,y:0};dirty=true;}
 async function regenerate(){const b=$('regenerate');b.disabled=true;$('start').disabled=true;$('setup-status').textContent='Die Welt entsteht …';await new Promise(requestAnimationFrame);await new Promise(resolve=>setTimeout(resolve,10));try{world=generateWorld(settings);state=createState(world,settings.players);prepareWorld();$('setup-status').textContent='Bereit. Alle Fraktionen werden von Menschen gespielt.';updateUI();requestRender();}catch(error){$('setup-status').textContent=error.message;}finally{b.disabled=false;$('start').disabled=!world;}}
@@ -208,7 +210,7 @@ function receiveOnline(data,meta={event:'sync'}){
   const wasSetup=setup;setup=data.status==='lobby';hasGame=!setup;if(wasSetup&&!setup)menuOpen=false;if(first)prepareWorld();else dirty=true;
   if(data.status==='play'&&previous&&['pass','shoot'].includes(action?.kind)&&state.lastShots.length)busy={kind:'volley',shots:state.lastShots,progress:0,start:performance.now(),duration:1100/speed};
   if(data.status==='play'&&previous&&action?.kind==='move'&&!meta.battles?.length){const b=makeBattle(action,previous,state,world);if(b)battles.push(b);}for(const event of meta.battles||[]){const b=makeBattle(event.action,{player:event.owner,p:{[event.action.target]:event.before}},{p:{[event.action.target]:event.after}},world);if(b)battles.push(b);}if(action?.kind==='undo'){battles=[];busy=null;}
-  if(action?.source!==undefined&&state.p[action.source]?.owner===data.you&&state.player===data.you&&['convert','barracks','tower','wall','demolishWall','demolishTower','flag'].includes(action.kind)){selected=action.source;if(action.kind==='convert'){type=action.conversion==='horse'?'horse':action.conversion==='archer'?'archer':'soldier';amount=Math.min(1,available(state.p[selected],type));}}
+  if(action?.source!==undefined&&state.p[action.source]?.owner===data.you&&state.player===data.you&&['convert','barracks','demolishBarracks','tower','wall','demolishWall','demolishTower','flag'].includes(action.kind)){selected=action.source;if(action.kind==='convert'){type=action.conversion==='horse'?'horse':action.conversion==='archer'?'archer':'soldier';amount=Math.min(1,available(state.p[selected],type));}}
   if(data.status==='lobby')$('lobby').hidden=false;else if(wasSetup||first)$('lobby').hidden=true;$('connection').hidden=false;$('setup').hidden=true;
   $('connection-status').textContent=`Online · Du spielst ${NAMES[data.you]} · ${online.saving?`${online.pending.length} Aktion(en) werden gespeichert …`:'gespeichert'}`;
   $('lobby-title').textContent=data.status==='lobby'?'Lobby':'Partie gespeichert';
