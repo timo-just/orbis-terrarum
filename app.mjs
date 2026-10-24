@@ -1,16 +1,16 @@
-import {towerAnchor,wallRoute,drawJoinedWall} from './fortifications.mjs?v=fortifications-15';
-import {drawOrnateFrame} from './frame.mjs?v=fortifications-15';
-import {drawParchment} from './parchment.mjs?v=fortifications-15';
-import {drawMountain} from './mountains.mjs?v=fortifications-15';
-import {drawUnit as unit} from './units.mjs?v=fortifications-15';
-import {drawBarracks} from './barracks.mjs?v=fortifications-15';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=fortifications-15';
-import {guideHTML} from './guide.mjs?v=fortifications-15';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=fortifications-15';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=fortifications-15';
-import {OnlineGame} from './online.mjs?v=fortifications-15';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=fortifications-15';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=fortifications-15';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=stonework-16';
+import {drawOrnateFrame} from './frame.mjs?v=stonework-16';
+import {drawParchment} from './parchment.mjs?v=stonework-16';
+import {drawMountain} from './mountains.mjs?v=stonework-16';
+import {drawUnit as unit} from './units.mjs?v=stonework-16';
+import {drawBarracks} from './barracks.mjs?v=stonework-16';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=stonework-16';
+import {guideHTML} from './guide.mjs?v=stonework-16';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=stonework-16';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=stonework-16';
+import {OnlineGame} from './online.mjs?v=stonework-16';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=stonework-16';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=stonework-16';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -34,7 +34,6 @@ new ResizeObserver(resize).observe(canvas);
 
 function requestRender(){if(framePending)return;framePending=true;requestAnimationFrame(render);}
 function drawLine(context,a,b,width,color){context.beginPath();context.moveTo(a.x*S,a.y*S);context.lineTo(b.x*S,b.y*S);context.strokeStyle=color;context.lineWidth=width;context.lineCap='round';context.stroke();}
-function drawTower(c,x,y,color){c.save();c.translate(x,y);c.shadowColor='#16263055';c.shadowBlur=1;c.shadowOffsetY=1;c.fillStyle='#c7c7ae';c.strokeStyle='#4f554f';c.lineWidth=.9;c.beginPath();c.arc(0,0,4.7,0,Math.PI*2);c.fill();c.stroke();c.shadowColor='transparent';c.fillStyle='#929b91';c.beginPath();c.arc(0,0,3.1,0,Math.PI*2);c.fill();c.stroke();for(let i=0;i<8;i++){c.save();c.rotate(i*Math.PI/4);c.fillStyle='#e4e0c8';c.fillRect(-1,-5,2,1.9);c.strokeRect(-1,-5,2,1.9);c.restore();}c.fillStyle=color;c.fillRect(-1.1,-1.1,2.2,2.2);c.restore();}
 
 function towerPoint(t){const key=t.province+':'+t.corner;if(!fortPositions.has(key))fortPositions.set(key,towerAnchor(world.provinces[t.province].cell,world.corners[t.corner].point,5.8/S));return fortPositions.get(key);}
 function joinedWall(edge,province){const at=(point,index)=>{const corner=edge.vertices?.[index]??world.corners.findIndex(c=>dist2(c.point,point)<1e-12),tower=state.towers.find(t=>t.province===province&&t.corner===corner);return tower?towerPoint(tower):null;};return wallRoute(edge,world.provinces[province].home,at(edge.a,0),at(edge.b,1),S);}

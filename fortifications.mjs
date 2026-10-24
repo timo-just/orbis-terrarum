@@ -1,4 +1,4 @@
-import {dist2} from './world.mjs?v=fortifications-15';
+import {dist2} from './world.mjs?v=stonework-16';
 // Closest point to the corner in a polygon inset by the tower's full footprint.
 export function towerAnchor(cell,corner,radius){
  let area=0;cell.forEach((a,i)=>{const b=cell[(i+1)%cell.length];area+=a.x*b.y-b.x*a.y;});
@@ -27,6 +27,7 @@ export function wallRoute(edge,home,startTower,endTower,S=1400){
  if(endTower){const d=Math.max(len*.55,Math.min(len,(endTower.x-a.x)*tx+(endTower.y-a.y)*ty-6/S));points.push({x:a.x+tx*d,y:a.y+ty*d},endTower);}else points.push(b);
  return {points,sign};
 }
+// W1: classic stone wall with closely spaced crenellations.
 export function drawJoinedWall(g,route,color,S=1400){
  const {points,sign}=route;g.save();g.lineCap='butt';g.lineJoin='round';
  const line=new Path2D();points.forEach((p,i)=>i?line.lineTo(p.x*S,p.y*S):line.moveTo(p.x*S,p.y*S));
@@ -39,4 +40,13 @@ export function drawJoinedWall(g,route,color,S=1400){
   while(next<travelled+len){const t=(next-travelled)/len;g.save();g.translate(a.x*S+dx*t,a.y*S+dy*t);g.rotate(angle);g.fillStyle='#e1dec6';g.strokeStyle='#4f554f';g.lineWidth=.65;g.fillRect(-1.4,-sign*2.1-1.05,2.8,2.1);g.strokeRect(-1.4,-sign*2.1-1.05,2.8,2.1);g.restore();next+=5;}travelled+=len;
  }
  const n=parseInt(color.slice(1),16);g.strokeStyle=`rgb(${(n>>16)*.55},${(n>>8&255)*.55},${(n&255)*.55})`;g.lineWidth=1.2;g.stroke(stripes);g.restore();
+}
+
+// T1: selected open round tower, matching the approved vector preview.
+export function drawTower(g,x,y,color){
+ g.save();g.translate(x,y);g.fillStyle='#213c3340';g.beginPath();g.arc(.6,1,5.3,0,Math.PI*2);g.fill();
+ g.lineWidth=.65;g.strokeStyle='#4f554f';g.fillStyle='#c7c7ae';g.beginPath();g.arc(0,0,4.8,0,Math.PI*2);g.fill();g.stroke();
+ g.fillStyle='#929b91';g.beginPath();g.arc(0,0,3.15,0,Math.PI*2);g.fill();g.stroke();
+ for(let i=0;i<8;i++){g.save();g.rotate(i*Math.PI/4);g.fillStyle='#e4e0c8';g.strokeStyle='#4f554f';g.lineWidth=.5;g.fillRect(-1,-5,2,1.8);g.strokeRect(-1,-5,2,1.8);g.restore();}
+ g.fillStyle=color;g.strokeStyle='#3b4d4b';g.lineWidth=.35;g.fillRect(-1,-1,2,2);g.strokeRect(-1,-1,2,2);g.restore();
 }
