@@ -11,7 +11,7 @@ Object.assign(pairs,{'Name des Spielstands':'Save name','Partie':'Game','Eine Ei
 const colors={Neutral:'Neutral',Blau:'Blue',Rot:'Red',Grün:'Green',Gelb:'Yellow',Lila:'Purple',Schwarz:'Black',BLAU:'BLUE',ROT:'RED',GRÜN:'GREEN',GELB:'YELLOW',LILA:'PURPLE',SCHWARZ:'BLACK'};
 export function translate(text){if(language==='de')return text;const trimmed=text.trim();if(pairs[trimmed])return text.replace(trimmed,pairs[trimmed]);let s=text;
  s=s.replace(/^(Blau|Rot|Grün|Gelb|Lila|Schwarz) wählt eine freie Startprovinz\. Wer zuerst wählt, zieht zuletzt\.$/,(_,c)=>`${colors[c]} chooses a starting province. First to choose moves last.`)
- .replace(/^(Blau|Rot|Grün|Gelb|Lila|Schwarz): (\d+) Soldaten verteilen – jeder Klick auf eine eigene Provinz setzt einen Soldaten\.$/,(_,c,n)=>`${colors[c]}: place ${n} soldiers — one per click on your provinces.`)
+ .replace(/^(Blau|Rot|Grün|Gelb|Lila|Schwarz): (\d+) Soldaten verteilen – eigene Provinz anklicken, um Nachschub zu platzieren\.$/,(_,c,n)=>`${colors[c]}: place ${n} soldiers — click your provinces to place reinforcements.`)
  .replace(/^Noch (\d+) Soldaten frei platzieren$/,(_,n)=>`${n} reinforcements left to place`)
  .replace(/^(Blau|Rot|Grün|Gelb|Lila|Schwarz) ist am Zug\.$/,(_,c)=>`${colors[c]}'s turn.`)
  .replace(/^Mit (\d+) Spielern starten$/,(_,n)=>`Start with ${n} players`)

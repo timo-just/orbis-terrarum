@@ -70,3 +70,5 @@ noscript{position:absolute;padding:20px;background:white;color:#222}
  .four{grid-template-columns:repeat(2,1fr)}
 }
 .amount{display:grid;grid-template-columns:32px minmax(35px,1fr) 32px auto;gap:6px;margin-top:10px;align-items:center}.amount input{width:100%;min-width:0;grid-column:2;grid-row:1}.amount button{min-width:0;min-height:34px;padding:5px 7px}.amount #less{grid-column:1;grid-row:1}.amount #more{grid-column:3;grid-row:1}.amount #all{grid-column:4;grid-row:1}
+
+@media (hover:hover) and (pointer:fine){button[data-shortcut]::after{content:attr(data-shortcut);display:inline-block;margin-left:.4em;font-size:.7em;opacity:.65;border:1px solid currentColor;border-radius:3px;padding:0 .25em;}}

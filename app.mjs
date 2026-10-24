@@ -1,10 +1,10 @@
-import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=expansion-7';
-import {guideHTML} from './guide.mjs?v=expansion-7';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=expansion-7';
-import {makeBattle,drawBattles} from './combat.mjs?v=expansion-7';
-import {OnlineGame} from './online.mjs?v=expansion-7';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=expansion-7';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=expansion-7';
+import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=controls-8';
+import {guideHTML} from './guide.mjs?v=controls-8';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=controls-8';
+import {makeBattle,drawBattles} from './combat.mjs?v=controls-8';
+import {OnlineGame} from './online.mjs?v=controls-8';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=controls-8';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=controls-8';
 import {ICONS} from './icons.mjs';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
@@ -101,7 +101,8 @@ function render(time){framePending=false;ctx.setTransform(DPR,0,0,DPR,-viewport.
 }
 function targets(){if(selected===null||!operation)return [];const kind=operation==='buildWall'?'wall':operation==='demolishWall'?'demolishWall':operation==='buildTower'?'tower':'demolishTower';return (kind.includes('ower')?world.corners.map((_,i)=>i):state.links[selected].map(l=>l.target)).filter(target=>legal(state,{kind,source:selected,target}));}
 function announce(text){status=text;updateUI();requestRender();}
-function phaseText(){if(state.phase==='draft')return `${NAMES[state.player]} wählt eine freie Startprovinz. Wer zuerst wählt, zieht zuletzt.`;if(state.pool>0)return `${NAMES[state.player]}: ${state.pool} Soldaten verteilen – jeder Klick auf eine eigene Provinz setzt einen Soldaten.`;return `${NAMES[state.player]} ist am Zug.`;}
+let deployAmount=1;
+function phaseText(){if(state.phase==='draft')return `${NAMES[state.player]} wählt eine freie Startprovinz. Wer zuerst wählt, zieht zuletzt.`;if(state.pool>0)return `${NAMES[state.player]}: ${state.pool} Soldaten verteilen – eigene Provinz anklicken, um Nachschub zu platzieren.`;return `${NAMES[state.player]} ist am Zug.`;}
 function save(){try{saved={version:1,world,state,settings:{...settings}};localStorage.setItem('orbis-terrarum-v1',JSON.stringify(saved));storageOK=true;}catch{storageOK=false;}}
 function commit(action){if(online.room){sendOnlineAction(action);return;}try{const previous=state,owner=state.player;state=apply(state,action);selected=null;amount=0;operation=null;dirty=true;
     if(action.kind==='move'){const b=makeBattle(action,previous,state,world);if(b)battles.push(b);}if(action.kind==='undo'){battles=[];busy=null;}
@@ -117,6 +118,7 @@ function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!se
   $('status').textContent=online.room?`Du: ${NAMES[online.color]}. ${onlinePending?'Aktion wird gespeichert …':phaseText()}`:status||phaseText();const own=selected!==null&&state.p[selected].owner===state.player&&(!online.room||online.myTurn),normal=state.phase==='play'&&state.pool===0&&!onlinePending&&(!online.room||online.myTurn);
   $('selection').hidden=!own||!normal;if(own){const movable=available(state.p[selected],type);amount=Math.max(0,Math.min(amount,movable));$('selection').textContent=`${amount} / ${movable} ${LABELS[type].toUpperCase()}`;$('amount').max=movable;$('amount').value=amount;}
   $('province-panel').hidden=!own||!normal;$('units-panel').hidden=tab!=='move';$('trade-panel').hidden=tab!=='trade';$('archer-hint').hidden=type!=='archer';$('build-panel').hidden=tab!=='build';$('units-tab').setAttribute('aria-pressed',String(tab==='move'));$('build-tab').setAttribute('aria-pressed',String(tab==='build'));$('trade-tab').setAttribute('aria-pressed',String(tab==='trade'));
+  if(state.pool>0){deployAmount=Math.max(1,Math.min(deployAmount,state.pool));$('selection').hidden=false;$('selection').textContent=getLanguage()==='en'?`${deployAmount} per click / ${state.pool} remaining`:`${deployAmount} pro Klick / ${state.pool} verbleibend`;}else deployAmount=1;
   $('phase-hint').textContent=state.phase==='draft'?'Startprovinzen wählen':state.pool?`Noch ${state.pool} Soldaten frei platzieren`:operation?'Markierte Kante oder Ecke anklicken. Esc bricht ab.':own?'': 'Eigene Provinz anklicken, Einheiten auswählen und eine Nachbarprovinz anklicken.';
   const sameControls=controlsCache&&controlsCache.state===state&&controlsCache.selected===selected&&controlsCache.type===type&&controlsCache.operation===operation&&controlsCache.tab===tab;
   if(!sameControls){controlsCache={state,selected,type,operation,tab};
@@ -128,6 +130,8 @@ function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!se
     if(state.towers.some(t=>t.province===selected))build.append(button(operation==='demolishTower'?'Abbrechen':'Turm abreißen · +2',()=>chooseOperation('demolishTower'),false,'danger'));
   }
   }
+  for(const [id,key] of [['build-tab','Q'],['trade-tab','W'],['units-tab','E']])$(id).dataset.shortcut=key;
+  for(const id of ['unit-types','conversions','build-panel'])[...$(id).children].forEach((b,i)=>{if(i<4)b.dataset.shortcut='ASDF'[i];});$('all').dataset.shortcut='F';
   $('end-turn').textContent=state.phase==='draft'?'Startprovinz wählen':state.pool?`Nachschub: ${state.pool}`:'Zug passen';$('end-turn').disabled=!normal;$('undo').disabled=!legal(state,{kind:'undo',player:online.room?online.color:undoOwner(state)});
   const won=winner(state);if(won!==null||state.drawn){$('victory').hidden=false;$('winner-title').textContent=state.drawn?'Remis':`${NAMES[won]} gewinnt`;$('winner-title').style.color=state.drawn?'#c8e8ef':COLORS[won];$('victory-text').textContent=state.drawn?'Das Rundenlimit ist erreicht.':'Die letzte aktive Fraktion beherrscht die Welt.';$('province-panel').hidden=true;$('end-turn').disabled=true;}
   if(!storageOK)$('status').textContent+=' Automatisches Speichern ist in diesem Browser nicht verfügbar.';resize();
@@ -136,7 +140,7 @@ function button(text,fn,disabled=false,cls=''){const b=document.createElement('b
 function chooseOperation(op){operation=operation===op?null:op;dirty=true;updateUI();requestRender();}
 function selectAt(x,y,all=false){if(setup||menuOpen||onlinePending||(online.room&&!online.myTurn)||state.drawn||winner(state)!==null)return;const point=screenToWorld(x,y),id=world.provinces.findIndex(p=>inside(point,p.cell));
   if(state.phase==='draft'){if(id>=0&&state.p[id].owner===0){if(online.room){sendOnlineAction({kind:'draft',source:id});return;}state=chooseStart(state,id);status=phaseText();dirty=true;save();updateUI();requestRender();}else announce('Wähle eine freie grüne Provinz.');return;}
-  if(state.pool>0){if(id>=0&&state.p[id].owner===state.player)commit({kind:'deploy',source:id,amount:1});else announce(phaseText());return;}
+  if(state.pool>0){if(id>=0&&state.p[id].owner===state.player)commit({kind:'deploy',source:id,amount:Math.min(deployAmount,state.pool)});else announce(phaseText());return;}
   if(operation&&selected!==null){const choices=targets();let nearest=null,d=Infinity;for(const target of choices){const value=operation.includes('Tower')?dist2(point,towerPoint({province:selected,corner:target})):segmentDistance(point,edgeFor(selected,target).a,edgeFor(selected,target).b);if(value<d){d=value;nearest=target;}}
     const tolerance=20/(mapSize*zoom);if(nearest!==null&&d<tolerance*tolerance){commit({kind:operation==='buildTower'?'tower':operation==='buildWall'?'wall':operation,source:selected,target:nearest});return;}if(id<0){clearSelection();return;}announce('Bitte direkt auf eine markierte Kante oder Ecke klicken.');return;
   }
@@ -148,14 +152,28 @@ function selectAt(x,y,all=false){if(setup||menuOpen||onlinePending||(online.room
 }
 function clearSelection(){if(!state)return;selected=null;amount=0;operation=null;status=phaseText();dirty=true;updateUI();requestRender();}
 function zoomAt(x,y,next){const point=screenToWorld(x,y);zoom=Math.max(.55,Math.min(4,next));pan.x=x-mapCenter.x-(point.x-.5)*mapSize*zoom;pan.y=y-mapCenter.y-(point.y-.5)*mapSize*zoom;requestRender();}
-canvas.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,zoom*Math.exp(-e.deltaY*.0013));},{passive:false});
+function canUseShortcuts(){return state&&!setup&&!menuOpen&&!$('guide').open&&!document.querySelector('dialog[open]')&&!onlinePending&&(!online.room||online.myTurn)&&state.phase==='play'&&!state.drawn&&winner(state)===null;}
+function setQuantity(value){if(state.pool>0)deployAmount=Math.max(1,Math.min(state.pool,value));else if(selected!==null)amount=Math.max(0,Math.min(available(state.p[selected],type),value));updateUI();requestRender();}
+canvas.addEventListener('wheel',e=>{e.preventDefault();const point=screenToWorld(e.clientX,e.clientY),id=world.provinces.findIndex(p=>inside(point,p.cell));
+  if(!e.ctrlKey&&!e.shiftKey&&!e.altKey&&canUseShortcuts()&&id>=0&&state.p[id].owner===state.player&&(state.pool>0||id===selected)){
+    if(e.deltaY)setQuantity((state.pool>0?deployAmount:amount)+(e.deltaY<0?1:-1));return;
+  }zoomAt(e.clientX,e.clientY,zoom*Math.exp(-e.deltaY*.0013));},{passive:false});
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',e=>{if(e.button!==0&&e.button!==2)return;canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});drag={x:e.clientX,y:e.clientY,pan:{...pan},moved:false,right:e.button===2,time:performance.now()};if(pointers.size===2){const [a,b]=[...pointers.values()];pinch={distance:Math.hypot(a.x-b.x,a.y-b.y),zoom,point:screenToWorld((a.x+b.x)/2,(a.y+b.y)/2)};}});
 canvas.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch&&pointers.size===2){const [a,b]=[...pointers.values()],x=(a.x+b.x)/2,y=(a.y+b.y)/2;zoom=Math.max(.55,Math.min(4,pinch.zoom*Math.hypot(a.x-b.x,a.y-b.y)/pinch.distance));pan.x=x-mapCenter.x-(pinch.point.x-.5)*mapSize*zoom;pan.y=y-mapCenter.y-(pinch.point.y-.5)*mapSize*zoom;if(drag)drag.moved=true;requestRender();}else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)>5)drag.moved=true;if(drag.moved){pan={x:drag.pan.x+dx,y:drag.pan.y+dy};requestRender();}}});
 canvas.addEventListener('pointerup',e=>{pointers.delete(e.pointerId);if(drag&&!drag.moved&&!drag.right&&!pinch)selectAt(e.clientX,e.clientY,false);drag=null;pinch=null;});
 canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);drag=null;pinch=null;});
 canvas.addEventListener('dblclick',e=>e.preventDefault());
-window.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('guide').open){$('guide').close();return;}if(menuOpen)toggleMenu();else clearSelection();}});window.addEventListener('resize',()=>{fitCamera=true;resize();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('guide').open){$('guide').close();return;}if(menuOpen)toggleMenu();else clearSelection();return;}
+  if(e.ctrlKey||e.metaKey||e.altKey||e.repeat||e.target.closest?.('input,textarea,select,[contenteditable],dialog')||!canUseShortcuts())return;
+  const key=e.key.toLowerCase();
+  if(/^[1-9]$/.test(key)&&(state.pool>0||selected!==null)){e.preventDefault();setQuantity(Number(key));return;}
+  if(state.pool>0||selected===null)return;
+  const menu={q:'build-tab',w:'trade-tab',e:'units-tab'}[key];if(menu){e.preventDefault();$(menu).click();return;}
+  const index='asdf'.indexOf(key);if(index<0)return;
+  const buttons=tab==='move'?[...$('unit-types').children,$('all')]:[...(tab==='build'?$('build-panel'):$('conversions')).children];
+  const choice=buttons[index];if(choice&&!choice.disabled){e.preventDefault();choice.click();}
+});window.addEventListener('resize',()=>{fitCamera=true;resize();});
 $('units-tab').onclick=()=>{tab='move';operation=null;dirty=true;updateUI();requestRender();};$('build-tab').onclick=()=>{tab='build';updateUI();};$('trade-tab').onclick=()=>{tab='trade';updateUI();};
 $('amount').oninput=()=>{amount=Number($('amount').value);updateUI();requestRender();};$('less').onclick=()=>{amount=Math.max(0,amount-1);updateUI();requestRender();};$('more').onclick=()=>{if(selected!==null)amount=Math.min(available(state.p[selected],type),amount+1);updateUI();requestRender();};$('all').onclick=()=>{if(selected!==null)amount=available(state.p[selected],type);updateUI();requestRender();};
 $('end-turn').onclick=()=>commit({kind:'pass'});$('undo').onclick=()=>commit({kind:'undo',player:online.room?online.color:undoOwner(state)});
@@ -164,7 +182,7 @@ $('menu').onclick=toggleMenu;
 $('new-game').onclick=()=>{menuOpen=true;updateUI();};
 $('prepare-new-game').onclick=()=>{menuOpen=false;hasGame=false;setup=true;clearSelection();regenerate();};
 
-function prepareWorld(){battles=[];piecePositions.clear();fitCamera=true;terrainKey='';controlsCache=null;factionsKey='';paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));vegetation=makeVegetation();zoom=1;pan={x:0,y:0};dirty=true;}
+function prepareWorld(){deployAmount=1;battles=[];piecePositions.clear();fitCamera=true;terrainKey='';controlsCache=null;factionsKey='';paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));vegetation=makeVegetation();zoom=1;pan={x:0,y:0};dirty=true;}
 async function regenerate(){const b=$('regenerate');b.disabled=true;$('start').disabled=true;$('setup-status').textContent='Die Welt entsteht …';await new Promise(requestAnimationFrame);await new Promise(resolve=>setTimeout(resolve,10));try{world=generateWorld(settings);state=createState(world,settings.players);prepareWorld();$('setup-status').textContent='Bereit. Alle Fraktionen werden von Menschen gespielt.';updateUI();requestRender();}catch(error){$('setup-status').textContent=error.message;}finally{b.disabled=false;$('start').disabled=!world;}}
 function playerButtons(){$('players').replaceChildren(...Array.from({length:6},(_,i)=>button(String(i+1),()=>{settings.players=i+1;playerButtons();},false,settings.players===i+1?'active':'')));}
 for(const key of ['rivers','mountains','lakes','provinces']){$(key).oninput=()=>{settings[key]=Number($(key).value);$(`${key}-value`).textContent=settings[key];};$(key).onchange=regenerate;}
