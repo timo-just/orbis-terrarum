@@ -4,7 +4,7 @@ const pairs={
 'Aktuelle Onlinepartie':'Current online game',
 'Spielstand als Datei herunterladen':'Download save file',
 'Datei herunterladen und Online-Raum schließen':'Download file & close online room',
-'Online bleibt nur der aktuelle Spielstand. Für dauerhafte Sicherungen eine Datei herunterladen. Räume ohne Aktionen seit 7 Tagen werden beim Erstellen einer neuen Lobby entfernt.':'Online holds only the current state. Download a file for permanent backups. Rooms with no actions for 7 days are removed when a new lobby is created.',
+'Online bleibt nur der aktuelle Spielstand. Für dauerhafte Sicherungen eine Datei herunterladen. Räume können nach 7 Tagen ohne Aktionen automatisch entfernt werden.':'Online holds only the current state. Download a file for permanent backups. Rooms may be removed automatically after 7 days without actions.',
 'Diese Datei online fortsetzen':'Host this save online',
 'Online-Raum geschlossen. Du siehst jetzt eine Offline-Kopie.':'Online room closed. This is now an offline copy.',
 'Kaserne abreißen · +5':'Demolish barracks · +5','Kaserne abgerissen: fünf Soldaten zurück.':'Barracks demolished: five exhausted soldiers returned.',

@@ -1,3 +1,5 @@
+> Seit der Cloudflare-Umstellung betrifft dieser Bericht nur noch alte Supabase-Partien. Neue Onlinepartien nutzen Cloudflare. Aktueller Betrieb: [HOSTING.md](HOSTING.md).
+
 # Orbis Terrarum: Onlinebetrieb und Kapazität
 
 Stand: 24. Oktober 2026. Kostenloser Supabase-Tarif vorausgesetzt.

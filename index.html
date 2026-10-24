@@ -7,7 +7,7 @@
   <meta name="description" content="Orbis Terrarum: rundenbasierte Eroberung auf zufälligen Voronoi-Karten. Für ein bis sechs Menschen an einem Bildschirm.">
   <title>Orbis Terrarum</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=sync-23">
+  <link rel="stylesheet" href="./style.css?v=cloudflare-24">
 </head>
 <body>
   <main id="game" aria-label="Orbis Terrarum">
@@ -50,7 +50,7 @@
       <button id="guide-online">Anleitung</button>
       <button id="download-online">Spielstand als Datei herunterladen</button>
       <button id="close-online" class="danger" hidden>Datei herunterladen und Online-Raum schließen</button>
-      <p class="hint">Online bleibt nur der aktuelle Spielstand. Für dauerhafte Sicherungen eine Datei herunterladen. Räume ohne Aktionen seit 7 Tagen werden beim Erstellen einer neuen Lobby entfernt.</p>
+      <p class="hint">Online bleibt nur der aktuelle Spielstand. Für dauerhafte Sicherungen eine Datei herunterladen. Räume können nach 7 Tagen ohne Aktionen automatisch entfernt werden.</p>
       <p id="lobby-count" class="hint"></p>
       <form id="rename-form"><label for="lobby-name">Dein Name</label><input id="lobby-name" maxlength="28" required autocomplete="nickname"><button id="rename-submit" type="submit">Namen speichern</button><p id="rename-status" class="hint" role="status"></p></form>
       <button id="lobby-refresh">Lobby aktualisieren</button>
@@ -83,6 +83,6 @@
     <dialog id="guide"><h2>Anleitung</h2><div id="guide-content"></div><button id="guide-close">Schließen</button></dialog>
     <noscript>Für Orbis Terrarum muss JavaScript aktiviert sein.</noscript>
   </main>
-  <script type="module" src="./app.mjs?v=sync-23"></script>
+  <script type="module" src="./app.mjs?v=cloudflare-24"></script>
 </body>
 </html>
