@@ -1,11 +1,12 @@
-import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=interaction-10';
-import {guideHTML} from './guide.mjs?v=interaction-10';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=interaction-10';
-import {makeBattle,drawBattles} from './combat.mjs?v=interaction-10';
-import {OnlineGame} from './online.mjs?v=interaction-10';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=interaction-10';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=interaction-10';
-import {ICONS} from './icons.mjs?v=interaction-10';
+import {drawBarracks} from './barracks.mjs?v=courtyard-11';
+import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=courtyard-11';
+import {guideHTML} from './guide.mjs?v=courtyard-11';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=courtyard-11';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=courtyard-11';
+import {OnlineGame} from './online.mjs?v=courtyard-11';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=courtyard-11';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=courtyard-11';
+import {ICONS} from './icons.mjs?v=courtyard-11';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -41,7 +42,6 @@ function requestRender(){if(framePending)return;framePending=true;requestAnimati
 function drawLine(context,a,b,width,color){context.beginPath();context.moveTo(a.x*S,a.y*S);context.lineTo(b.x*S,b.y*S);context.strokeStyle=color;context.lineWidth=width;context.lineCap='round';context.stroke();}
 function drawTower(c,x,y,color){c.save();c.translate(x,y);c.shadowColor='#16263055';c.shadowBlur=1;c.shadowOffsetY=1;c.fillStyle='#c7c7ae';c.strokeStyle='#4f554f';c.lineWidth=.9;c.beginPath();c.arc(0,0,4.7,0,Math.PI*2);c.fill();c.stroke();c.shadowColor='transparent';c.fillStyle='#929b91';c.beginPath();c.arc(0,0,3.1,0,Math.PI*2);c.fill();c.stroke();for(let i=0;i<8;i++){c.save();c.rotate(i*Math.PI/4);c.fillStyle='#e4e0c8';c.fillRect(-1,-5,2,1.9);c.strokeRect(-1,-5,2,1.9);c.restore();}c.fillStyle=color;c.fillRect(-1.1,-1.1,2.2,2.2);c.restore();}
 function drawWall(c,segment,color){const a={x:segment.a.x*S,y:segment.a.y*S},b={x:segment.b.x*S,y:segment.b.y*S},len=Math.hypot(b.x-a.x,b.y-a.y);c.save();c.translate(a.x,a.y);c.rotate(Math.atan2(b.y-a.y,b.x-a.x));c.fillStyle='#727c72';c.fillRect(0,-2.7,len,5.4);c.fillStyle='#c7c7b0';c.fillRect(0,-1.9,len,3.8);c.strokeStyle='#4f554f';c.lineWidth=.65;c.strokeRect(0,-2.4,len,4.8);const n=Math.max(1,Math.floor(len/5));for(let i=0;i<n;i++){const x=(i+.5)*len/n;c.fillStyle='#e1dec6';c.fillRect(x-1.4,-3.1,2.8,2.1);c.strokeRect(x-1.4,-3.1,2.8,2.1);}c.fillStyle=dark(color);c.fillRect(0,1,len,1.2);c.restore();}
-function drawBarracks(c,x,y,color){c.save();c.translate(x,y);c.fillStyle='#8eaa73';c.strokeStyle='#586850';c.lineWidth=.65;c.beginPath();c.roundRect(-8,-7,16,14,2);c.fill();c.stroke();c.fillStyle='#d4c49c';c.fillRect(-6,-4,12,8);c.fillStyle='#9e5e3e';c.beginPath();c.moveTo(-7,-5);c.lineTo(0,-7);c.lineTo(7,-5);c.lineTo(0,-1);c.closePath();c.fill();c.strokeStyle='#623e30';c.stroke();c.fillStyle='#bf8354';c.beginPath();c.moveTo(-7,-5);c.lineTo(0,-1);c.lineTo(0,2);c.lineTo(-7,-1);c.closePath();c.fill();c.fillStyle='#83533a';c.beginPath();c.moveTo(7,-5);c.lineTo(0,-1);c.lineTo(0,2);c.lineTo(7,-1);c.closePath();c.fill();c.fillStyle='#4d4637';c.fillRect(-1,1,2,3);c.strokeStyle='#5e654e';c.lineWidth=.7;for(let i=-6;i<=6;i+=3){c.beginPath();c.moveTo(i,5);c.lineTo(i,7);c.stroke();}c.beginPath();c.moveTo(6,-1);c.lineTo(6,5);c.stroke();c.fillStyle=color;c.fillRect(6,-1,3,2);c.restore();}
 
 function towerPoint(t){const p=world.corners[t.corner].point,province=world.provinces[t.province],c=province.home,d=Math.sqrt(dist2(p,c))||1,r=5.8/S;let q=c;for(let inset=Math.min(d*.35,.0075);inset<d;inset+=.001){q={x:p.x+(c.x-p.x)/d*inset,y:p.y+(c.y-p.y)/d*inset};if(Array.from({length:16},(_,i)=>({x:q.x+Math.cos(i*Math.PI/8)*r,y:q.y+Math.sin(i*Math.PI/8)*r})).every(v=>inside(v,province.cell)))return q;}return c;}
 function wallSegment(edge,province){const c=world.provinces[province].home,dx=edge.b.x-edge.a.x,dy=edge.b.y-edge.a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,sign=((c.x-(edge.a.x+edge.b.x)/2)*nx+(c.y-(edge.a.y+edge.b.y)/2)*ny)>=0?1:-1,offset=3.2/S*sign;return {a:{x:edge.a.x+nx*offset,y:edge.a.y+ny*offset},b:{x:edge.b.x+nx*offset,y:edge.b.y+ny*offset}};}
@@ -67,8 +67,8 @@ function symbolPositions(id,counts,structures){const cache=JSON.stringify([id,co
   });if(layouts.size>500)layouts.clear();layouts.set(cache,out);return out;
 }
 function displayCounts(id){const p=state.p[id],counts=Object.fromEntries(TYPES.map(t=>[t,p[t]]));for(const t of TYPES){let hidden=0;for(const b of battles)if(b.action.target===id)hidden=Math.max(hidden,b.hidden[t]);counts[t]=Math.max(0,counts[t]-hidden);}if(busy?.kind==='volley')busy.shots.forEach((shot,i)=>{if(shot.target===id&&busy.progress<.55+(i%6)*.06)counts[shot.type]++;});return counts;}
-function drawScene(){g.clearRect(0,0,S,S);const nextTerrainKey=world.seed+':'+state.p.map(p=>p.owner).join(',');if(terrainKey===nextTerrainKey){g.drawImage(terrain,0,0);}else{world.provinces.forEach((p,id)=>{
-    const path=paths.get(id);g.fillStyle=COLORS[state.p[id].owner];g.fill(path);g.strokeStyle='#fafcfde8';g.lineWidth=1.5;g.stroke(path);
+function drawScene(){g.clearRect(0,0,S,S);const owners=displayOwners(state,battles),nextTerrainKey=world.seed+':'+owners.join(',');if(terrainKey===nextTerrainKey){g.drawImage(terrain,0,0);}else{world.provinces.forEach((p,id)=>{
+    const path=paths.get(id);g.fillStyle=COLORS[owners[id]];g.fill(path);g.strokeStyle='#fafcfde8';g.lineWidth=1.5;g.stroke(path);
   });
   // Lakes are whole water cells. Paint together, outline only the actual shore.
   const waterPath=new Path2D();world.lakeCells.forEach(cell=>waterPath.addPath(polyPath(cell)));g.fillStyle='#3eb3de';g.fill(waterPath);g.save();g.clip(waterPath);g.strokeStyle='#b9edf04a';g.lineWidth=1;for(let y=30;y<S;y+=80){g.beginPath();g.moveTo(0,y);g.quadraticCurveTo(S/2,y+8,S,y);g.stroke();}g.restore();
@@ -92,7 +92,7 @@ function drawPieces(g){if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.
   if(operation&&selected!==null){for(const target of targets()){if(operation.includes('Tower')){const p=towerPoint({province:selected,corner:target});g.fillStyle='#fff';g.beginPath();g.arc(p.x*S,p.y*S,6,0,Math.PI*2);g.fill();g.strokeStyle='#263d4c';g.lineWidth=1.4;g.stroke();}else{const edge=edgeFor(selected,target);if(edge)drawLine(g,edge.a,edge.b,5,'#fff9ae');}}}
 }
 function render(time){framePending=false;ctx.setTransform(DPR,0,0,DPR,-viewport.left*DPR,-viewport.top*DPR);ctx.clearRect(viewport.left,viewport.top,W,H);drawOcean(ctx);
-  if(!world||!state)return;battles=battles.filter(b=>time-b.start<b.duration);if(battles.length)requestRender();if(busy){busy.progress=Math.min(1,(time-busy.start)/busy.duration);if(busy.progress>=1){busy=null;dirty=true;}else if(busy.kind==='volley')dirty=true;}
+  if(!world||!state)return;const previousBattleCount=battles.length;battles=battles.filter(b=>time-b.start<b.duration);if(battles.length!==previousBattleCount)dirty=true;if(battles.length)requestRender();if(busy){busy.progress=Math.min(1,(time-busy.start)/busy.duration);if(busy.progress>=1){busy=null;dirty=true;}else if(busy.kind==='volley')dirty=true;}
   if(dirty){drawScene();dirty=false;}
   ctx.save();ctx.translate(mapCenter.x+pan.x,mapCenter.y+pan.y);ctx.scale(mapSize*zoom/S,mapSize*zoom/S);ctx.drawImage(scene,-S/2,-S/2);ctx.translate(-S/2,-S/2);drawPieces(ctx);drawBattles(ctx,battles,time,COLORS,unit,piecePositions,S);ctx.restore();
   if(busy){if(busy.kind==='move'){const from=worldToScreen(world.provinces[busy.action.source].home),to=worldToScreen(world.provinces[busy.action.target].home),t=busy.progress;ctx.strokeStyle=COLORS[busy.owner];ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();const n=Math.max(1,busy.action.amount),rows=Math.min(5,n),cols=Math.ceil(n/rows),r=2.8*mapSize*zoom/S;for(let i=0;i<n;i++)unit(ctx,busy.action.type,from.x+(to.x-from.x)*t+(Math.floor(i/rows)-(cols-1)/2)*r*2.5,from.y+(to.y-from.y)*t+(i%rows-(rows-1)/2)*r*1.15,COLORS[busy.owner],0,r);}
