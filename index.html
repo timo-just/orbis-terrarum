@@ -7,7 +7,7 @@
   <meta name="description" content="Orbis Terrarum: rundenbasierte Eroberung auf zufälligen Voronoi-Karten. Für ein bis sechs Menschen an einem Bildschirm.">
   <title>Orbis Terrarum</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=parchment-13">
+  <link rel="stylesheet" href="./style.css?v=reinforcements-14">
 </head>
 <body>
   <main id="game" aria-label="Orbis Terrarum">
@@ -15,6 +15,7 @@
       <button id="menu" aria-expanded="false">Menü</button>
       <div id="hud"><div id="factions" aria-label="Fraktionen"></div></div>
       <aside id="connection" hidden><span id="connection-status" role="status"></span></aside>
+      <div id="turn-banner" hidden aria-live="polite"><strong id="turn-label" data-no-translate></strong><div id="reinforcement-total" hidden><strong id="reinforcement-count"></strong><span id="reinforcement-label">Soldaten verteilen</span></div></div>
     </header>
     <canvas id="map" aria-label="Spielkarte. Mausrad zum Zoomen, ziehen zum Verschieben. Provinzen mit einem Klick auswählen." tabindex="0"></canvas>
     <section id="setup" class="panel setup" aria-label="Neue Partie">
@@ -59,6 +60,12 @@
     <section id="actions" class="panel actions" aria-label="Spielaktionen" hidden>
       <p id="status" role="status" aria-live="polite"></p>
       <div id="selection" hidden></div>
+      <div id="deploy-controls" hidden>
+        <label for="deploy-range" id="deploy-label">Soldaten pro Klick</label>
+        <div class="deploy-stepper"><button id="deploy-less" aria-label="Ein Soldat weniger">−</button><output id="deploy-value" for="deploy-range">1</output><button id="deploy-more" aria-label="Ein Soldat mehr">+</button></div>
+        <input id="deploy-range" type="range" min="1" value="1" aria-label="Soldaten pro Klick">
+        <p id="deploy-help">Mausrad in der Menüleiste oder 1–9. Danach eigene Provinz anklicken.</p>
+      </div>
       <div id="province-panel" hidden>
         <div class="tabs"><button id="units-tab" aria-pressed="true">Bewegen</button><button id="trade-tab" aria-pressed="false">Tauschen</button><button id="build-tab" aria-pressed="false">Bauen</button></div>
         <div id="units-panel"><div id="unit-types" class="three"></div><div class="amount"><button id="less" aria-label="Eine Einheit weniger">−</button><input id="amount" type="range" min="0" value="0" aria-label="Anzahl ausgewählter Einheiten"><button id="more" aria-label="Eine Einheit mehr">+</button><button id="all">Alle</button></div><p id="archer-hint" class="hint" hidden>Bogen: Gegner anklicken zum Schießen, eigene Provinz zum Bewegen.</p></div>
@@ -73,6 +80,6 @@
     <dialog id="guide"><h2>Anleitung</h2><div id="guide-content"></div><button id="guide-close">Schließen</button></dialog>
     <noscript>Für Orbis Terrarum muss JavaScript aktiviert sein.</noscript>
   </main>
-  <script type="module" src="./app.mjs?v=parchment-13"></script>
+  <script type="module" src="./app.mjs?v=reinforcements-14"></script>
 </body>
 </html>

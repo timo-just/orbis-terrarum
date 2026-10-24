@@ -74,3 +74,19 @@ noscript{position:absolute;padding:20px;background:white;color:#222}
 @media (hover:hover) and (pointer:fine){button[data-shortcut]::after{content:attr(data-shortcut);display:inline-block;margin-left:.4em;font-size:.7em;opacity:.65;border:1px solid currentColor;border-radius:3px;padding:0 .25em;}}
 
 #guide table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}#guide th,#guide td{text-align:left;vertical-align:top;padding:9px 7px;border-bottom:1px solid #a8ad9870;overflow-wrap:anywhere}#guide th{background:#dce2ce}#guide li{font-size:14px;margin:8px 0}#guide nav{background:#e0e5d2;border-radius:8px;padding:12px}#guide h3{border-bottom:1px solid #a8ad9870;padding-bottom:5px;margin-top:28px}#guide nav p{margin-bottom:0}@media(max-width:500px){#guide{padding:16px}#guide td,#guide th{padding:7px 4px;font-size:12px}}
+
+#topbar[data-playing=true]{background:var(--turn-color);color:var(--turn-ink)}
+#topbar[data-playing=true] #connection{color:inherit}
+#turn-banner{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 3px 3px;min-width:0}
+#turn-label{font-size:20px;overflow-wrap:anywhere;min-width:0}
+#reinforcement-total{display:flex;align-items:center;gap:12px;flex-shrink:0}
+#reinforcement-count{font-size:48px;line-height:1;font-variant-numeric:tabular-nums}
+#reinforcement-label{font-size:13px;max-width:110px;font-weight:650}
+#deploy-controls{padding:13px;border:1px solid #ffffff35;border-radius:10px;background:#ffffff09}
+#deploy-label{display:block;font-size:12px;text-align:center;font-weight:650}
+.deploy-stepper{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:9px;margin:10px 0}
+#deploy-value{font-size:30px;font-weight:750;text-align:center;font-variant-numeric:tabular-nums}
+#deploy-range{width:100%;accent-color:#f2d78c;margin:5px 0}
+#deploy-help{font-size:12px;line-height:1.5;margin:8px 0 0;color:#d5e2e6}
+.deploying #end-turn:disabled{opacity:1;background:#315e67;color:#fff4d6}
+@media(max-width:899px){#turn-banner{grid-row:3;padding:3px 0;gap:10px}#turn-label{font-size:16px}#reinforcement-count{font-size:36px}#reinforcement-label{font-size:11px;max-width:95px}#reinforcement-total{gap:8px}#deploy-controls{padding:8px 10px}.deploy-stepper{grid-template-columns:34px 1fr 34px;margin:4px 0}#deploy-value{font-size:24px}#deploy-help{font-size:11px;margin:4px 0 0}}
