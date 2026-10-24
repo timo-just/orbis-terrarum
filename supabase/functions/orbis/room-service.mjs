@@ -46,10 +46,13 @@ export function createRoomService(store,cryptoApi=globalThis.crypto){
           const actions=kind==='actions'?input.actions:[input.action];
           if(!Array.isArray(actions)||actions.length<1||actions.length>64)fail('Ungültige Aktionsliste.');
           if(kind==='actions'&&!validId(input.requestId))fail('Ungültige Aktionskennung.');
-          for(const action of actions){
+          for(const [index,action] of actions.entries()){
             if(next.snapshot.state.player!==color&&!(action?.kind==='undo'&&next.snapshot.state.undo?.at(-1)?.actor===color))fail('Du bist nicht am Zug.',403);
             if(!action||typeof action!=='object')fail('Aktion fehlt.');
+            const before=next.snapshot.state;
             try{next.snapshot.state=action.kind==='draft'?chooseStart(next.snapshot.state,action.source):apply(next.snapshot.state,{...action,player:color});}catch(error){fail(error.message);}
+            if(action.kind==='move')next.snapshot.recentBattles=[...(next.snapshot.recentBattles||[]),{id:`${row.revision+1}:${index}`,action,owner:color,before:before.p[action.target],after:next.snapshot.state.p[action.target]}].slice(-24);
+            if(action.kind==='undo')next.snapshot.recentBattles=[];
             next.snapshot.lastAction=action;
           }
           if(kind==='actions')next.snapshot.recentRequests=[...(next.snapshot.recentRequests||[]),{id:input.requestId,player:color}].slice(-128);

@@ -1,5 +1,5 @@
 import {ONLINE_URL} from './online-config.mjs';
-import {apply,chooseStart,undoOwner} from './engine.mjs?v=expansion-6';
+import {apply,chooseStart,undoOwner} from './engine.mjs?v=expansion-7';
 const advance=(state,action)=>action.kind==='draft'?chooseStart(state,action.source):apply(state,action);
 export class OnlineGame {
   constructor(onUpdate,onError){this.onUpdate=onUpdate;this.onError=onError;this.room=null;this.snapshot=null;this.confirmed=null;this.sending=false;this.timer=null;this.pending=[];this.batch=null;this.flushTimer=null;this.flushing=false;this.retryDelay=500;this.epoch=0;}
@@ -22,7 +22,8 @@ export class OnlineGame {
     const acknowledgedOwn=this.pending.some(p=>acknowledged.has(p.batch));
     this.pending=this.pending.filter(p=>!acknowledged.has(p.batch));
     if(this.batch&&acknowledged.has(this.batch.id))this.batch=null;
-    this.project({event:'sync',changed:!previous||previous.revision!==data.revision,remote:Boolean(previous&&!acknowledgedOwn&&data.lastActionRevision!==previous.lastActionRevision)});
+    const seen=new Set((previous?.recentBattles||[]).map(b=>b.id)),battles=previous?(data.recentBattles||[]).filter(b=>b.owner!==data.you&&!seen.has(b.id)):[];
+    this.project({event:'sync',battles,changed:!previous||previous.revision!==data.revision,remote:Boolean(previous&&!acknowledgedOwn&&data.lastActionRevision!==previous.lastActionRevision)});
   }
   project(meta={}){
     if(!this.confirmed)return;

@@ -1,10 +1,10 @@
-import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=expansion-6';
-import {guideHTML} from './guide.mjs?v=expansion-6';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=expansion-6';
-import {makeBattle,drawBattles} from './combat.mjs?v=expansion-6';
-import {OnlineGame} from './online.mjs?v=expansion-6';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=expansion-6';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=expansion-6';
+import {getLanguage,setLanguage,applyTranslations} from './i18n.mjs?v=expansion-7';
+import {guideHTML} from './guide.mjs?v=expansion-7';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=expansion-7';
+import {makeBattle,drawBattles} from './combat.mjs?v=expansion-7';
+import {OnlineGame} from './online.mjs?v=expansion-7';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=expansion-7';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=expansion-7';
 import {ICONS} from './icons.mjs';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
@@ -182,7 +182,7 @@ function receiveOnline(data,meta={event:'sync'}){
   const action=meta.event==='action'?meta.action:meta.remote?data.lastAction:null;if(first||action){selected=null;amount=0;operation=null;}if(first)busy=null;
   const wasSetup=setup;setup=data.status==='lobby';hasGame=!setup;if(wasSetup&&!setup)menuOpen=false;if(first)prepareWorld();else dirty=true;
   if(data.status==='play'&&previous&&['pass','shoot'].includes(action?.kind)&&state.lastShots.length)busy={kind:'volley',shots:state.lastShots,progress:0,start:performance.now(),duration:1100/speed};
-  if(data.status==='play'&&previous&&action?.kind==='move'){const b=makeBattle(action,previous,state,world);if(b)battles.push(b);}if(action?.kind==='undo'){battles=[];busy=null;}
+  if(data.status==='play'&&previous&&action?.kind==='move'&&!meta.battles?.length){const b=makeBattle(action,previous,state,world);if(b)battles.push(b);}for(const event of meta.battles||[]){const b=makeBattle(event.action,{player:event.owner,p:{[event.action.target]:event.before}},{p:{[event.action.target]:event.after}},world);if(b)battles.push(b);}if(action?.kind==='undo'){battles=[];busy=null;}
   if(action?.source!==undefined&&state.p[action.source]?.owner===data.you&&state.player===data.you&&['convert','barracks','tower','wall','demolishWall','demolishTower','flag'].includes(action.kind)){selected=action.source;if(action.kind==='convert'){type=action.conversion==='horse'?'horse':action.conversion==='archer'?'archer':'soldier';amount=Math.min(1,available(state.p[selected],type));}}
   if(data.status==='lobby')$('lobby').hidden=false;else if(wasSetup||first)$('lobby').hidden=true;$('connection').hidden=false;$('setup').hidden=true;
   $('connection-status').textContent=`Online · Du spielst ${NAMES[data.you]} · ${online.saving?`${online.pending.length} Aktion(en) werden gespeichert …`:'gespeichert'}`;
