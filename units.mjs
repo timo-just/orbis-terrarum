@@ -1,4 +1,4 @@
-import {ICONS} from './icons.mjs?v=map-sheet-17';
+import {ICONS} from './icons.mjs?v=keys-18';
 const cache=new Map();
 const glyph=(name,index)=>{const key=name+index;if(!cache.has(key))cache.set(key,new Path2D(ICONS[name].paths[index].pathData));return cache.get(key);};
 export function drawUnit(g,type,x,y,color,stage=0,r=5.2,gold=false){

@@ -1,1 +1,1 @@
-export {guideHTML} from './rules.mjs?v=map-sheet-17';
+export {guideHTML} from './rules.mjs?v=keys-18';

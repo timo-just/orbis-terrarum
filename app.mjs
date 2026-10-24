@@ -1,16 +1,16 @@
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=map-sheet-17';
-import {drawOrnateFrame} from './frame.mjs?v=map-sheet-17';
-import {drawParchment} from './parchment.mjs?v=map-sheet-17';
-import {drawMountain} from './mountains.mjs?v=map-sheet-17';
-import {drawUnit as unit} from './units.mjs?v=map-sheet-17';
-import {drawBarracks} from './barracks.mjs?v=map-sheet-17';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=map-sheet-17';
-import {guideHTML} from './guide.mjs?v=map-sheet-17';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=map-sheet-17';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=map-sheet-17';
-import {OnlineGame} from './online.mjs?v=map-sheet-17';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=map-sheet-17';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=map-sheet-17';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=keys-18';
+import {drawOrnateFrame} from './frame.mjs?v=keys-18';
+import {drawParchment} from './parchment.mjs?v=keys-18';
+import {drawMountain} from './mountains.mjs?v=keys-18';
+import {drawUnit as unit} from './units.mjs?v=keys-18';
+import {drawBarracks} from './barracks.mjs?v=keys-18';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=keys-18';
+import {guideHTML} from './guide.mjs?v=keys-18';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=keys-18';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=keys-18';
+import {OnlineGame} from './online.mjs?v=keys-18';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=keys-18';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=keys-18';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -132,7 +132,7 @@ function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!se
     if(state.towers.some(t=>t.province===selected))build.append(button(operation==='demolishTower'?'Abbrechen':'Turm abreißen · +2',()=>chooseOperation('demolishTower'),false,'danger'));
   }
   }
-  for(const [id,key] of [['build-tab','Q'],['trade-tab','W'],['units-tab','E']])$(id).dataset.shortcut=key;
+  for(const [id,key] of [['build-tab','E'],['trade-tab','W'],['units-tab','Q']])$(id).dataset.shortcut=key;
   for(const id of ['unit-types','conversions','build-panel'])[...$(id).children].forEach((b,i)=>{if(i<4)b.dataset.shortcut='ASDF'[i];});$('all').dataset.shortcut='F';
   $('end-turn').textContent=state.phase==='draft'?'Startprovinz wählen':state.pool?(english?`${deployAmount} per click`:`${deployAmount} pro Klick`):'Zug passen';$('end-turn').disabled=!normal;$('undo').disabled=!legal(state,{kind:'undo',player:online.room?online.color:undoOwner(state)});
   const won=winner(state);if(won!==null||state.drawn){$('victory').hidden=false;$('winner-title').textContent=state.drawn?'Remis':`${NAMES[won]} gewinnt`;$('winner-title').style.color=state.drawn?'#c8e8ef':COLORS[won];$('victory-text').textContent=state.drawn?'Das Rundenlimit ist erreicht.':'Die letzte aktive Fraktion beherrscht die Welt.';$('province-panel').hidden=true;$('end-turn').disabled=true;}
@@ -173,7 +173,7 @@ window.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('guide').open){$
   const key=e.key.toLowerCase();
   if(/^[1-9]$/.test(key)&&(state.pool>0||selected!==null)){e.preventDefault();setQuantity(Number(key));return;}
   if(state.pool>0||selected===null)return;
-  const menu={q:'build-tab',w:'trade-tab',e:'units-tab'}[key];if(menu){e.preventDefault();$(menu).click();return;}
+  const menu={q:'units-tab',w:'trade-tab',e:'build-tab'}[key];if(menu){e.preventDefault();$(menu).click();return;}
   const index='asdf'.indexOf(key);if(index<0)return;
   const buttons=tab==='move'?[...$('unit-types').children,$('all')]:[...(tab==='build'?$('build-panel'):$('conversions')).children];
   const choice=buttons[index];if(choice&&!choice.disabled){e.preventDefault();choice.click();}
