@@ -90,3 +90,32 @@ noscript{position:absolute;padding:20px;background:white;color:#222}
 #deploy-help{font-size:12px;line-height:1.5;margin:8px 0 0;color:#d5e2e6}
 .deploying #end-turn:disabled{opacity:1;background:#315e67;color:#fff4d6}
 @media(max-width:899px){#turn-banner{grid-row:3;padding:3px 0;gap:10px}#turn-label{font-size:16px}#reinforcement-count{font-size:36px}#reinforcement-label{font-size:11px;max-width:95px}#reinforcement-total{gap:8px}#deploy-controls{padding:8px 10px}.deploy-stepper{grid-template-columns:34px 1fr 34px;margin:4px 0}#deploy-value{font-size:24px}#deploy-help{font-size:11px;margin:4px 0 0}}
+
+/* Turn information shares the original single header row. */
+#topbar{grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px}
+#menu-turn{grid-column:1;grid-row:1;display:flex;align-items:center;gap:12px;min-width:0}
+#menu-turn #menu{flex-shrink:0}
+#turn-label{font-size:14px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hud{grid-column:2;grid-row:1}
+#turn-banner{grid-column:3;grid-row:1;padding:0;gap:0}
+#reinforcement-count{font-size:32px}
+#reinforcement-label{font-size:10px;max-width:75px}
+#reinforcement-total{gap:6px}
+#connection{grid-column:4;grid-row:1;max-width:200px}
+@media(max-width:899px){
+ #topbar{grid-template-columns:minmax(132px,1.1fr) minmax(0,1fr) auto;gap:5px 7px;padding:7px 8px}
+ #menu-turn{gap:6px}#menu-turn #menu{min-width:48px;min-height:34px;padding:6px;font-size:12px;grid-column:auto;grid-row:auto}
+ #turn-label{font-size:11px;max-width:110px;min-width:0}
+ #hud{grid-column:2;grid-row:1}#turn-banner{grid-column:3;grid-row:1}
+ #reinforcement-count{font-size:28px}#reinforcement-label{font-size:9px;max-width:60px}#reinforcement-total{gap:4px}
+ #connection{grid-column:1/-1;grid-row:2;max-width:none;font-size:10px}
+ #factions{gap:2px}.faction-name{overflow:hidden;text-overflow:ellipsis}
+}
+
+@media(max-width:899px){
+ #topbar:is([data-players="5"],[data-players="6"]){grid-template-columns:minmax(0,1fr) auto}
+ #topbar:is([data-players="5"],[data-players="6"]) #menu-turn{grid-column:1;grid-row:1}
+ #topbar:is([data-players="5"],[data-players="6"]) #turn-banner{grid-column:2;grid-row:1}
+ #topbar:is([data-players="5"],[data-players="6"]) #hud{grid-column:1/-1;grid-row:2}
+ #topbar:is([data-players="5"],[data-players="6"]) #connection{grid-row:3}
+}

@@ -7,15 +7,15 @@
   <meta name="description" content="Orbis Terrarum: rundenbasierte Eroberung auf zufälligen Voronoi-Karten. Für ein bis sechs Menschen an einem Bildschirm.">
   <title>Orbis Terrarum</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=reinforcements-14">
+  <link rel="stylesheet" href="./style.css?v=fortifications-15">
 </head>
 <body>
   <main id="game" aria-label="Orbis Terrarum">
     <header id="topbar" hidden>
-      <button id="menu" aria-expanded="false">Menü</button>
+      <div id="menu-turn"><button id="menu" aria-expanded="false">Menü</button><strong id="turn-label" data-no-translate></strong></div>
       <div id="hud"><div id="factions" aria-label="Fraktionen"></div></div>
       <aside id="connection" hidden><span id="connection-status" role="status"></span></aside>
-      <div id="turn-banner" hidden aria-live="polite"><strong id="turn-label" data-no-translate></strong><div id="reinforcement-total" hidden><strong id="reinforcement-count"></strong><span id="reinforcement-label">Soldaten verteilen</span></div></div>
+      <div id="turn-banner" hidden aria-live="polite"><div id="reinforcement-total" hidden><strong id="reinforcement-count"></strong><span id="reinforcement-label">Soldaten verteilen</span></div></div>
     </header>
     <canvas id="map" aria-label="Spielkarte. Mausrad zum Zoomen, ziehen zum Verschieben. Provinzen mit einem Klick auswählen." tabindex="0"></canvas>
     <section id="setup" class="panel setup" aria-label="Neue Partie">
@@ -80,6 +80,6 @@
     <dialog id="guide"><h2>Anleitung</h2><div id="guide-content"></div><button id="guide-close">Schließen</button></dialog>
     <noscript>Für Orbis Terrarum muss JavaScript aktiviert sein.</noscript>
   </main>
-  <script type="module" src="./app.mjs?v=reinforcements-14"></script>
+  <script type="module" src="./app.mjs?v=fortifications-15"></script>
 </body>
 </html>

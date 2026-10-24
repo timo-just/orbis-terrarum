@@ -1,15 +1,16 @@
-import {drawOrnateFrame} from './frame.mjs?v=reinforcements-14';
-import {drawParchment} from './parchment.mjs?v=reinforcements-14';
-import {drawMountain} from './mountains.mjs?v=reinforcements-14';
-import {drawUnit as unit} from './units.mjs?v=reinforcements-14';
-import {drawBarracks} from './barracks.mjs?v=reinforcements-14';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=reinforcements-14';
-import {guideHTML} from './guide.mjs?v=reinforcements-14';
-import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=reinforcements-14';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=reinforcements-14';
-import {OnlineGame} from './online.mjs?v=reinforcements-14';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=reinforcements-14';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=reinforcements-14';
+import {towerAnchor,wallRoute,drawJoinedWall} from './fortifications.mjs?v=fortifications-15';
+import {drawOrnateFrame} from './frame.mjs?v=fortifications-15';
+import {drawParchment} from './parchment.mjs?v=fortifications-15';
+import {drawMountain} from './mountains.mjs?v=fortifications-15';
+import {drawUnit as unit} from './units.mjs?v=fortifications-15';
+import {drawBarracks} from './barracks.mjs?v=fortifications-15';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=fortifications-15';
+import {guideHTML} from './guide.mjs?v=fortifications-15';
+import {snapshotLink,readSnapshot,validateSave,listSaves,storeSave,deleteSave} from './offline.mjs?v=fortifications-15';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=fortifications-15';
+import {OnlineGame} from './online.mjs?v=fortifications-15';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=fortifications-15';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=fortifications-15';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -23,7 +24,7 @@ const online=new OnlineGame(receiveOnline,message=>{$('connection-status').textC
 let onlinePending=false,pendingRoom=null,lobbyNameDirty=false,hasGame=false,menuOpen=false,controlsCache=null,factionsKey='';
 const terrain=document.createElement('canvas');terrain.width=terrain.height=S;const terrainContext=terrain.getContext('2d');let terrainKey='';
 const polyPath=poly=>{const p=new Path2D();poly.forEach((v,i)=>i?p.lineTo(v.x*S,v.y*S):p.moveTo(v.x*S,v.y*S));p.closePath();return p;};
-const paths=new Map(),layouts=new Map(),piecePositions=new Map();let vegetation=null,battles=[];const ocean=document.createElement('canvas');let oceanKey='';
+const paths=new Map(),layouts=new Map(),piecePositions=new Map(),fortPositions=new Map();let vegetation=null,battles=[];const ocean=document.createElement('canvas');let oceanKey='';
 
 function screenToWorld(x,y){return {x:mapOrigin.x+(x-mapCenter.x-pan.x)/(mapSize*zoom),y:mapOrigin.y+(y-mapCenter.y-pan.y)/(mapSize*zoom)};}
 function worldToScreen(p){return {x:mapCenter.x+pan.x+(p.x-mapOrigin.x)*mapSize*zoom,y:mapCenter.y+pan.y+(p.y-mapOrigin.y)*mapSize*zoom};}
@@ -34,9 +35,10 @@ new ResizeObserver(resize).observe(canvas);
 function requestRender(){if(framePending)return;framePending=true;requestAnimationFrame(render);}
 function drawLine(context,a,b,width,color){context.beginPath();context.moveTo(a.x*S,a.y*S);context.lineTo(b.x*S,b.y*S);context.strokeStyle=color;context.lineWidth=width;context.lineCap='round';context.stroke();}
 function drawTower(c,x,y,color){c.save();c.translate(x,y);c.shadowColor='#16263055';c.shadowBlur=1;c.shadowOffsetY=1;c.fillStyle='#c7c7ae';c.strokeStyle='#4f554f';c.lineWidth=.9;c.beginPath();c.arc(0,0,4.7,0,Math.PI*2);c.fill();c.stroke();c.shadowColor='transparent';c.fillStyle='#929b91';c.beginPath();c.arc(0,0,3.1,0,Math.PI*2);c.fill();c.stroke();for(let i=0;i<8;i++){c.save();c.rotate(i*Math.PI/4);c.fillStyle='#e4e0c8';c.fillRect(-1,-5,2,1.9);c.strokeRect(-1,-5,2,1.9);c.restore();}c.fillStyle=color;c.fillRect(-1.1,-1.1,2.2,2.2);c.restore();}
-function drawWall(c,segment,color){const a={x:segment.a.x*S,y:segment.a.y*S},b={x:segment.b.x*S,y:segment.b.y*S},len=Math.hypot(b.x-a.x,b.y-a.y);c.save();c.translate(a.x,a.y);c.rotate(Math.atan2(b.y-a.y,b.x-a.x));c.fillStyle='#727c72';c.fillRect(0,-2.7,len,5.4);c.fillStyle='#c7c7b0';c.fillRect(0,-1.9,len,3.8);c.strokeStyle='#4f554f';c.lineWidth=.65;c.strokeRect(0,-2.4,len,4.8);const n=Math.max(1,Math.floor(len/5));for(let i=0;i<n;i++){const x=(i+.5)*len/n;c.fillStyle='#e1dec6';c.fillRect(x-1.4,-3.1,2.8,2.1);c.strokeRect(x-1.4,-3.1,2.8,2.1);}c.fillStyle=dark(color);c.fillRect(0,1,len,1.2);c.restore();}
 
-function towerPoint(t){const p=world.corners[t.corner].point,province=world.provinces[t.province],c=province.home,d=Math.sqrt(dist2(p,c))||1,r=5.8/S;let q=c;for(let inset=Math.min(d*.35,.0075);inset<d;inset+=.001){q={x:p.x+(c.x-p.x)/d*inset,y:p.y+(c.y-p.y)/d*inset};if(Array.from({length:16},(_,i)=>({x:q.x+Math.cos(i*Math.PI/8)*r,y:q.y+Math.sin(i*Math.PI/8)*r})).every(v=>inside(v,province.cell)))return q;}return c;}
+function towerPoint(t){const key=t.province+':'+t.corner;if(!fortPositions.has(key))fortPositions.set(key,towerAnchor(world.provinces[t.province].cell,world.corners[t.corner].point,5.8/S));return fortPositions.get(key);}
+function joinedWall(edge,province){const at=(point,index)=>{const corner=edge.vertices?.[index]??world.corners.findIndex(c=>dist2(c.point,point)<1e-12),tower=state.towers.find(t=>t.province===province&&t.corner===corner);return tower?towerPoint(tower):null;};return wallRoute(edge,world.provinces[province].home,at(edge.a,0),at(edge.b,1),S);}
+
 function wallSegment(edge,province){const c=world.provinces[province].home,dx=edge.b.x-edge.a.x,dy=edge.b.y-edge.a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,sign=((c.x-(edge.a.x+edge.b.x)/2)*nx+(c.y-(edge.a.y+edge.b.y)/2)*ny)>=0?1:-1,offset=3.2/S*sign;return {a:{x:edge.a.x+nx*offset,y:edge.a.y+ny*offset},b:{x:edge.b.x+nx*offset,y:edge.b.y+ny*offset}};}
 function edgeFor(a,b){return world.edges.find(e=>e.provinces.includes(a)&&e.provinces.includes(b));}
 function dark(color){const n=parseInt(color.slice(1),16);return `rgb(${(n>>16)*.55},${(n>>8&255)*.55},${(n&255)*.55})`;}
@@ -74,7 +76,7 @@ function drawScene(){g.clearRect(0,0,S,S);const owners=displayOwners(state,battl
   terrainContext.clearRect(0,0,S,S);terrainContext.drawImage(scene,0,0);terrainKey=nextTerrainKey;}
 }
 function drawPieces(g){if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.shadow);g.fillStyle='#357747';g.fill(vegetation.leaves);g.fillStyle='#50894a';g.fill(vegetation.mid);g.fillStyle='#77a55d';g.fill(vegetation.light);g.strokeStyle='#b7ce9670';g.lineWidth=.8;g.stroke(vegetation.grass);}g.save();const clip=new Path2D();paths.forEach(path=>clip.addPath(path));g.clip(clip);world.edges.forEach(e=>{if(e.river){drawLine(g,e.a,e.b,7,'#eef9fc');drawLine(g,e.a,e.b,4.8,'#237ec5');drawLine(g,e.a,e.b,1.6,'#83d5f2');}});g.restore();g.strokeStyle='#f6fbf0';g.lineWidth=1.1;paths.forEach(path=>g.stroke(path));
-  state.walls.forEach(key=>{const [a,b]=key.split(':').map(Number),edge=edgeFor(a,b);if(!edge)return;const segment=wallSegment(edge,a);g.save();g.clip(paths.get(a));drawWall(g,segment,COLORS[state.p[a].owner]);g.restore();});
+  state.walls.forEach(key=>{const [a,b]=key.split(':').map(Number),edge=edgeFor(a,b);if(!edge)return;g.save();g.clip(paths.get(a));drawJoinedWall(g,joinedWall(edge,a),COLORS[state.p[a].owner],S);g.restore();});
   if(selected!==null){g.strokeStyle='#fff';g.lineWidth=4;g.stroke(paths.get(selected));}
   const obstacles=state.p.map(()=>[]);
   state.p.forEach((p,id)=>{if(p.barracks){const c=anchor(id),x=c.x-.012,y=c.y+.008;drawBarracks(g,x*S,y*S,COLORS[p.owner]);obstacles[id].push([x-.006,y-.009,x+.006,y+.009]);}});
@@ -105,10 +107,10 @@ function commit(action){if(online.room){sendOnlineAction(action);return;}try{con
     if(action.kind==='move'){const lost=previous.flags.findIndex((flag,id)=>id>0&&flag>=0&&state.flags[id]===-2);if(lost>0)status=`Fahne von ${NAMES[lost]} erobert: Alle Provinzen und Gebäude übernommen, gegnerische Einheiten entfernt.`;}
     save();updateUI();requestRender();
   }catch(error){announce(error.message);}}
-function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!setup||Boolean(online.room)||Boolean(pendingRoom);document.body.classList.toggle('choosing-map',setup);document.body.classList.toggle('menu-open',menuOpen);$('topbar').hidden=!hasGame&&!online.room;$('menu').disabled=!hasGame;$('menu').setAttribute('aria-expanded',String(menuOpen));$('local-menu').hidden=!menuOpen||Boolean(online.room);if(online.room)$('lobby').hidden=online.snapshot?.status!=='lobby'&&!menuOpen;if(layoutSetup!==setup){layoutSetup=setup;fitCamera=true;}$('topbar').dataset.playing=String(!setup);$('turn-banner').hidden=setup;$('hud').hidden=setup;$('actions').hidden=setup||menuOpen;$('victory').hidden=true;if(setup){$('resume').hidden=!saved;resize();return;}
+function updateUI(){if(!state)return;updateLobbyControls();$('setup').hidden=!setup||Boolean(online.room)||Boolean(pendingRoom);document.body.classList.toggle('choosing-map',setup);document.body.classList.toggle('menu-open',menuOpen);$('topbar').hidden=!hasGame&&!online.room;$('menu').disabled=!hasGame;$('menu').setAttribute('aria-expanded',String(menuOpen));$('local-menu').hidden=!menuOpen||Boolean(online.room);if(online.room)$('lobby').hidden=online.snapshot?.status!=='lobby'&&!menuOpen;if(layoutSetup!==setup){layoutSetup=setup;fitCamera=true;}$('topbar').dataset.playing=String(!setup);$('topbar').dataset.players=String(state.players);$('turn-banner').hidden=setup;$('turn-label').hidden=setup;$('hud').hidden=setup;$('actions').hidden=setup||menuOpen;$('victory').hidden=true;if(setup){$('resume').hidden=!saved;resize();return;}
   const english=getLanguage()==='en',seat=online.snapshot?.seats?.find(s=>s.color===state.player),turnName=seat?.name||translate(NAMES[state.player]);
   $('topbar').style.setProperty('--turn-color',COLORS[state.player]);$('topbar').style.setProperty('--turn-ink',state.player===4?'#24313b':'#ffffff');
-  $('turn-label').textContent=english?`${turnName}'s turn`:`${turnName} am Zug`;
+  $('turn-label').textContent=english?`${turnName}'s turn`:`${turnName} am Zug`;$('turn-label').title=$('turn-label').textContent;$('turn-label').hidden=setup;
   $('reinforcement-total').hidden=state.phase!=='play'||state.pool===0;$('reinforcement-count').textContent=state.pool;
   $('reinforcement-label').textContent=english?'soldiers left to place':'Soldaten verteilen';
   const nextFactionsKey=state.player+state.phase+state.p.map(p=>p.owner).join(',');if(factionsKey!==nextFactionsKey){factionsKey=nextFactionsKey;$('factions').replaceChildren(...Array.from({length:state.players},(_,i)=>{const id=i+1,el=document.createElement('div');el.className=`faction${id===state.player?' current':''}${state.phase!=='draft'&&!active(state,id)?' out':''}`;el.style.background=COLORS[id];const name=document.createElement('span'),count=document.createElement('span');name.className='faction-name';count.className='faction-count';name.textContent=NAMES[id].toUpperCase();count.textContent=state.p.filter(p=>p.owner===id).length;el.append(name,count);return el;}));}
@@ -185,7 +187,7 @@ $('menu').onclick=toggleMenu;
 $('new-game').onclick=()=>{menuOpen=true;updateUI();};
 $('prepare-new-game').onclick=()=>{menuOpen=false;hasGame=false;setup=true;clearSelection();regenerate();};
 
-function prepareWorld(){const vertices=[...world.provinces.flatMap(p=>p.cell),...world.lakeCells.flat()],xs=vertices.map(p=>p.x),ys=vertices.map(p=>p.y);mapBounds={x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};mapOrigin={x:mapBounds.x+mapBounds.w/2,y:mapBounds.y+mapBounds.h/2};oceanKey='';deployAmount=1;battles=[];piecePositions.clear();fitCamera=true;terrainKey='';controlsCache=null;factionsKey='';paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));vegetation=makeVegetation();zoom=1;pan={x:0,y:0};dirty=true;}
+function prepareWorld(){const vertices=[...world.provinces.flatMap(p=>p.cell),...world.lakeCells.flat()],xs=vertices.map(p=>p.x),ys=vertices.map(p=>p.y);mapBounds={x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};mapOrigin={x:mapBounds.x+mapBounds.w/2,y:mapBounds.y+mapBounds.h/2};oceanKey='';fortPositions.clear();deployAmount=1;battles=[];piecePositions.clear();fitCamera=true;terrainKey='';controlsCache=null;factionsKey='';paths.clear();layouts.clear();world.provinces.forEach((p,id)=>paths.set(id,polyPath(p.cell)));vegetation=makeVegetation();zoom=1;pan={x:0,y:0};dirty=true;}
 async function regenerate(){const b=$('regenerate');b.disabled=true;$('start').disabled=true;$('setup-status').textContent='Die Welt entsteht …';await new Promise(requestAnimationFrame);await new Promise(resolve=>setTimeout(resolve,10));try{world=generateWorld(settings);state=createState(world,settings.players);prepareWorld();$('setup-status').textContent='Bereit. Alle Fraktionen werden von Menschen gespielt.';updateUI();requestRender();}catch(error){$('setup-status').textContent=error.message;}finally{b.disabled=false;$('start').disabled=!world;}}
 function playerButtons(){$('players').replaceChildren(...Array.from({length:6},(_,i)=>button(String(i+1),()=>{settings.players=i+1;playerButtons();},false,settings.players===i+1?'active':'')));}
 for(const key of ['rivers','mountains','lakes','provinces']){$(key).oninput=()=>{settings[key]=Number($(key).value);$(`${key}-value`).textContent=settings[key];};$(key).onchange=regenerate;}
