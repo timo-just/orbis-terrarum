@@ -7,7 +7,7 @@
   <meta name="description" content="Orbis Terrarum: rundenbasierte Eroberung auf zufälligen Voronoi-Karten. Für ein bis sechs Menschen an einem Bildschirm.">
   <title>Orbis Terrarum</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=layout-5">
+  <link rel="stylesheet" href="./style.css?v=expansion-6">
 </head>
 <body>
   <main id="game" aria-label="Orbis Terrarum">
@@ -20,27 +20,33 @@
     <section id="setup" class="panel setup" aria-label="Neue Partie">
       <h1>Orbis Terrarum</h1>
       <p class="subtitle">Eine Welt. Eure Entscheidungen.</p>
+      <label class="language-label" for="language">Sprache / Language <select id="language"><option value="de">Deutsch</option><option value="en">English</option></select></label>
       <fieldset><legend>Spielerzahl</legend><div id="players" class="six"></div></fieldset>
       <p class="hint">Gemeinsam an einem Bildschirm · 1 Spieler = Übungsmodus</p>
       <div class="sliders">
+        <label for="provinces">Provinzen <output id="provinces-value">100</output></label><input id="provinces" type="range" min="40" max="200" step="10" value="100">
         <label for="rivers">Flüsse <output id="rivers-value">2</output></label><input id="rivers" type="range" min="0" max="8" value="2">
         <label for="mountains">Gebirge <output id="mountains-value">3</output></label><input id="mountains" type="range" min="0" max="10" value="3">
-        <label for="lakes">Seen <output id="lakes-value">2</output></label><input id="lakes" type="range" min="0" max="12" value="2">
+        <label for="lakes">Seen <output id="lakes-value">5</output></label><input id="lakes" type="range" min="0" max="12" value="5">
       </div>
       <p class="hint controls">Klick: auswählen · weiterer Klick: Anzahl +1 · Alle: eigener Knopf<br>Mausrad: Zoom am Zeiger · Ziehen: Karte verschieben</p>
       <div class="two"><button id="regenerate" disabled>Nächste Karte</button><button id="start" class="primary" disabled>Karte spielen</button></div>
       <label class="name-label" for="player-name">Dein Name <input id="player-name" maxlength="28" value="Spieler"></label><button id="online-create" class="quiet">Online-Lobby erstellen</button>
       <button id="resume" class="quiet" hidden>Gespeicherte Partie fortsetzen</button>
+      <button id="load-start" class="quiet">Spielstand laden</button>
       <p id="setup-status" role="status" class="hint"></p>
     </section>
-    <section id="local-menu" class="panel" hidden aria-label="Spielmenü"><h2>Menü</h2><p>Deine Partie wird automatisch gespeichert.</p><button id="prepare-new-game" class="primary">Neue Partie vorbereiten</button></section>
+    <section id="local-menu" class="panel" hidden aria-label="Spielmenü"><h2>Menü</h2><p>Deine Partie wird automatisch gespeichert.</p><button id="guide-local">Anleitung</button><label for="save-name">Name des Spielstands</label><input id="save-name" maxlength="40" value="Partie"><button id="save-offline">Spielstand speichern</button><button id="share-offline">Spielstand-Link kopieren</button><button id="export-offline">Spielstand herunterladen</button><button id="import-offline">Spielstand laden</button><input id="save-file" type="file" accept="application/json,.json" hidden><div id="save-slots"></div><p id="save-status" class="hint" role="status"></p><button id="prepare-new-game" class="primary">Neue Partie vorbereiten</button></section>
     <section id="join-panel" class="panel join-panel" hidden aria-label="Lobby beitreten">
       <h2>Mitspielen</h2><p>Gib deinen Namen ein, bevor du der Lobby beitrittst.</p>
+      <label class="language-label" for="join-language">Sprache / Language <select id="join-language"><option value="de">Deutsch</option><option value="en">English</option></select></label>
       <form id="join-form"><label for="join-name">Dein Name</label><input id="join-name" maxlength="28" required autocomplete="nickname" placeholder="Dein Name"><button id="join-submit" class="primary" type="submit">Lobby beitreten</button></form>
       <p id="join-status" class="hint" role="status"></p><button id="join-cancel" class="quiet">Zurück</button>
     </section>
     <section id="lobby" class="panel setup" hidden aria-label="Online-Lobby">
       <h2 id="lobby-title">Lobby</h2><div id="lobby-seats"></div>
+      <label class="language-label" for="lobby-language">Sprache / Language <select id="lobby-language"><option value="de">Deutsch</option><option value="en">English</option></select></label>
+      <button id="guide-online">Anleitung</button>
       <p id="lobby-count" class="hint"></p>
       <form id="rename-form"><label for="lobby-name">Dein Name</label><input id="lobby-name" maxlength="28" required autocomplete="nickname"><button id="rename-submit" type="submit">Namen speichern</button><p id="rename-status" class="hint" role="status"></p></form>
       <button id="lobby-refresh">Lobby aktualisieren</button>
@@ -54,17 +60,19 @@
       <p id="status" role="status" aria-live="polite"></p>
       <div id="selection" hidden></div>
       <div id="province-panel" hidden>
-        <div class="tabs"><button id="units-tab" aria-pressed="true">Einheiten</button><button id="build-tab" aria-pressed="false">Bauen</button></div>
-        <div id="units-panel"><div id="unit-types" class="three"></div><div id="conversions" class="four"></div><div class="amount"><button id="less" aria-label="Eine Einheit weniger">−</button><input id="amount" type="range" min="0" value="0" aria-label="Anzahl ausgewählter Einheiten"><button id="more" aria-label="Eine Einheit mehr">+</button><button id="all">Alle</button></div></div>
+        <div class="tabs"><button id="units-tab" aria-pressed="true">Bewegen</button><button id="trade-tab" aria-pressed="false">Tauschen</button><button id="build-tab" aria-pressed="false">Bauen</button></div>
+        <div id="units-panel"><div id="unit-types" class="three"></div><div class="amount"><button id="less" aria-label="Eine Einheit weniger">−</button><input id="amount" type="range" min="0" value="0" aria-label="Anzahl ausgewählter Einheiten"><button id="more" aria-label="Eine Einheit mehr">+</button><button id="all">Alle</button></div><p id="archer-hint" class="hint" hidden>Bogen: Gegner anklicken zum Schießen, eigene Provinz zum Bewegen.</p></div>
+        <div id="trade-panel" hidden><div id="conversions" class="four"></div></div>
         <div id="build-panel" class="three" hidden></div>
       </div>
       <div id="phase-hint" class="phase-hint"></div>
-      <div class="bottom"><button id="end-turn" class="primary">Zug passen</button></div>
+      <div class="bottom"><button id="undo" disabled>Rückgängig</button><button id="end-turn" class="primary">Zug passen</button></div>
       <p class="hint keyboard">Mausrad zoomt · Ziehen verschiebt · Esc hebt die Auswahl auf</p>
     </section>
     <section id="victory" class="panel victory" hidden><h2 id="winner-title"></h2><p id="victory-text">Die letzte aktive Fraktion beherrscht die Welt.</p><button id="new-game" class="primary">Neue Partie</button></section>
+    <dialog id="guide"><h2>Anleitung</h2><div id="guide-content"></div><button id="guide-close">Schließen</button></dialog>
     <noscript>Für Orbis Terrarum muss JavaScript aktiviert sein.</noscript>
   </main>
-  <script type="module" src="./app.mjs?v=layout-5"></script>
+  <script type="module" src="./app.mjs?v=expansion-6"></script>
 </body>
 </html>

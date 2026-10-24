@@ -9,6 +9,7 @@ export const available = (p,t) => Math.max(0, p[t]-(t==='horse'?p.horseExhausted
 export const active = (s,id) => id>0 && id<=s.players && s.flags[id]!==-2 && s.p.some(p=>p.owner===id) && (s.flags[id]<0 || s.p[s.flags[id]].owner===id);
 export const winner = s => s.phase==='draft'||s.players===1 ? null : Array.from({length:s.players},(_,i)=>i+1).filter(id=>active(s,id)).filter((_,i,a)=>a.length===1)[0]??null;
 export const wallKey = (p,n) => `${p}:${n}`;
+export const undoOwner = s => s.undo?.at(-1)?.actor??0;
 export function createState(world, players=4) {
   return {players, player:1, phase:'draft', drafted:0, turns:0, pool:0, drawn:false, flags:Array(players+1).fill(-1),
     walls:[], towers:[], cooldown:{}, lastShots:[], p:world.provinces.map(()=>({owner:0,soldier:1,horse:0,archer:0,
@@ -26,13 +27,15 @@ export function divisor(s,from,to) {
   return (s.links[from].some(l=>l.target===to&&l.river)?2:1)*(s.walls.includes(wallKey(to,from))?2:1);
 }
 export function legal(s,a) {
+  if(a.kind==='undo')return s.phase==='play'&&undoOwner(s)>0&&undoOwner(s)===(a.player??s.player);
   if(s.phase!=='play'||s.drawn||winner(s)!==null)return false;
   const p=s.p[a.source], own=p?.owner===s.player;
   if(s.pool>0)return a.kind==='deploy'&&own&&Number.isInteger(a.amount)&&a.amount>0&&a.amount<=s.pool;
   if(a.kind==='deploy')return false;
   if(a.kind==='pass')return true;
   if(!own)return false;
-  if(a.kind==='convert')return ({horse:p.soldier>=3,archer:p.soldier>=8,footHorse:p.horse>=1,footArcher:p.archer>=1})[a.conversion]===true;
+  if(a.kind==='convert')return ({horse:p.soldier>=3,archer:p.soldier>=5,footHorse:p.horse>=1,footArcher:p.archer>=1})[a.conversion]===true;
+  if(a.kind==='shoot')return Number.isInteger(a.amount)&&a.amount>0&&a.amount<=available(p,'archer')&&s.links[a.source].some(l=>l.target===a.target)&&s.p[a.target].owner>0&&s.p[a.target].owner!==s.player&&total(s.p[a.target])>0;
   if(a.kind==='barracks')return !p.barracks&&p.soldier>=10;
   if(a.kind==='flag')return s.flags[s.player]>=0&&s.flags[s.player]!==a.source&&p.soldier>=10;
   if(a.kind==='tower'||a.kind==='demolishTower')return s.corners[a.target]?.includes(a.source)&&
@@ -56,14 +59,13 @@ export function shots(s,player) {
     const waiting=s.cooldown[`${t.province}:${t.corner}`]??s.cooldown[t.corner];if(waiting&&waiting!==player&&active(s,waiting))return;
     const target=[...s.corners[t.corner]].sort((a,b)=>a-b).find(enemy);if(target!==undefined)hit(t.province,target,t.corner);
   });
-  s.p.forEach((p,id)=>{if(p.owner!==player)return;for(let i=0;i<p.archer;i++){
-    const targets=s.links[id].map(l=>l.target).filter(enemy).sort((a,b)=>a-b);if(!targets.length)break;hit(id,targets[i%targets.length]);
-  }});return out;
+  return out;
 }
-export function apply(s,a) {
+function applyRaw(s,a) {
   if(!legal(s,a))throw Error('Diese Aktion ist hier nicht möglich.');
   const n=clone(s),p=n.p[a.source];n.lastShots=[];
   if(a.kind==='deploy'){p.soldier+=a.amount;n.pool-=a.amount;return n;}
+  if(a.kind==='shoot'){p.archerArrived+=a.amount;const target=n.p[a.target];for(let i=0;i<a.amount&&total(target)>0;i++){const type=TYPES.find(t=>target[t]>0);remove(target,type,1);n.lastShots.push({source:a.source,target:a.target,type,tower:null,arrow:true});}return n;}
   if(a.kind==='pass'){
     let next=s.player;for(let i=1;i<=s.players;i++){const id=((s.player-1-i)%s.players+s.players)%s.players+1;if(active(s,id)){next=id;break;}}
     n.player=next;n.turns++;n.pool=0;n.drawn=n.turns>=150*n.players;
@@ -72,15 +74,15 @@ export function apply(s,a) {
     n.lastShots=shots(s,next);n.lastShots.forEach(shot=>{remove(n.p[shot.target],shot.type,1);if(shot.tower!==null)n.cooldown[`${shot.source}:${shot.tower}`]=s.p[shot.target].owner;});return n;
   }
   if(a.kind==='convert'){
-    const [from,to,cost,produced]=({horse:['soldier','horse',3,1],archer:['soldier','archer',8,1],footHorse:['horse','soldier',1,2],footArcher:['archer','soldier',1,5]})[a.conversion];
+    const [from,to,cost,produced]=({horse:['soldier','horse',3,1],archer:['soldier','archer',5,1],footHorse:['horse','soldier',1,2],footArcher:['archer','soldier',1,3]})[a.conversion];
     const b=remove(p,from,cost);add(p,to,produced,b[1]===0&&b[0]>0?produced:0,b[1]>0?produced:0);return n;
   }
   if(a.kind==='barracks'){spend(p,10);p.barracks=true;return n;}
   if(a.kind==='flag'){spend(p,10);n.flags[s.player]=a.source;return n;}
   if(a.kind==='wall'){spend(p,5);n.walls.push(wallKey(a.source,a.target));return n;}
-  if(a.kind==='demolishWall'){p.soldier+=2;n.walls=n.walls.filter(w=>w!==wallKey(a.source,a.target));return n;}
+  if(a.kind==='demolishWall'){add(p,'soldier',2,0,2);n.walls=n.walls.filter(w=>w!==wallKey(a.source,a.target));return n;}
   if(a.kind==='tower'){spend(p,5);n.towers.push({province:a.source,corner:a.target});return n;}
-  if(a.kind==='demolishTower'){p.soldier+=2;n.towers=n.towers.filter(t=>!(t.province===a.source&&t.corner===a.target));return n;}
+  if(a.kind==='demolishTower'){add(p,'soldier',2,0,2);n.towers=n.towers.filter(t=>!(t.province===a.source&&t.corner===a.target));return n;}
   const target=n.p[a.target],spent=remove(p,a.type,a.amount,true),fresh=a.amount-spent[0];
   if(target.owner===s.player)add(target,a.type,a.amount,fresh,spent[0]);else{
     const effective=Math.floor(a.amount/divisor(s,a.source,a.target)),defence=strength(target),losses=Math.min(effective,defence),foot=Math.min(losses,target.soldier);
@@ -90,5 +92,15 @@ export function apply(s,a) {
   for(let id=1;id<=s.players;id++)if(s.flags[id]===a.target&&target.owner!==id){
     n.flags[id]=-2;n.p.forEach(p=>{if(p.owner===id){p.owner=s.player;for(const k of ['soldier','horse','archer','arrived','horseOnce','horseExhausted','archerArrived','soldierTwice','archerTwice'])p[k]=0;}});
   }return n;
+}
+export function apply(s,a){
+  if(a.kind==='undo'){
+    if(!legal(s,a))throw Error('Nur eigene Aktionen können zurückgenommen werden.');
+    const n=clone(s),entry=n.undo.pop();Object.assign(n,entry.fields);for(const [id,p] of entry.provinces)n.p[id]=p;return n;
+  }
+  const n=applyRaw({...s,undo:[]},a),fields={},provinces=[];
+  for(const key of Object.keys(s))if(!['undo','p','links','corners'].includes(key)&&JSON.stringify(s[key])!==JSON.stringify(n[key]))fields[key]=clone(s[key]);
+  for(let id=0;id<s.p.length;id++)if(JSON.stringify(s.p[id])!==JSON.stringify(n.p[id]))provinces.push([id,clone(s.p[id])]);
+  const history=undoOwner(s)===s.player?(s.undo||[]):[];n.undo=[...history,{actor:s.player,fields,provinces}].slice(-128);return n;
 }
 export function shade(p,t,index,player){if(p.owner!==player)return 0;const b=budget(p,t),fresh=p[t]-b[0]-b[1];return index<fresh?0:t==='horse'&&index<fresh+b[0]?1:2;}

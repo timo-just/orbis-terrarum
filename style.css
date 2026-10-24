@@ -17,11 +17,11 @@ button.primary{background:#2b9a68}button.primary:hover:not(:disabled){background
 .actions{grid-column:2;grid-row:2;min-height:0;overflow:auto;padding:18px 14px;display:flex;flex-direction:column;gap:14px;border-left:1px solid #ffffff24}
 #status{font-size:14px;line-height:1.5;margin:0;color:#e4f1f4}
 #selection{background:#244d61;border-radius:7px;padding:8px 10px;font-size:12px;font-weight:750;text-align:center}
-.tabs{display:flex;gap:7px;margin-bottom:10px}.tabs button{flex:1}
+.tabs{display:flex;gap:5px;margin-bottom:10px}.tabs button{flex:1;font-size:11px;padding:8px 4px;min-width:0}
 .six,.two,.three,.four{display:grid;gap:7px}.six{grid-template-columns:repeat(6,1fr)}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.four{grid-template-columns:repeat(2,1fr);margin-top:8px}
 .actions .three button,.actions .four button{font-size:11px;padding:8px 4px;min-height:40px}
 .amount{display:flex;gap:6px;align-items:center;margin-top:12px;flex-wrap:wrap}.amount input{width:100%;flex-basis:100%;accent-color:#48bfd4}.amount button{flex:1;min-height:34px;padding:5px 8px}
-.bottom{margin-top:auto}.bottom button{width:100%}.phase-hint{display:none}.keyboard{margin:0!important;font-size:10px!important;line-height:1.5!important;text-align:center}
+.bottom{margin-top:auto;display:grid;grid-template-columns:1fr 1.2fr;gap:7px}.bottom button{width:100%;font-size:12px}.phase-hint{display:none}.keyboard{margin:0!important;font-size:10px!important;line-height:1.5!important;text-align:center}
 .hint{font-size:12px;line-height:1.6;color:#b8d3de;margin:10px 0}.quiet{background:transparent;border-color:#ffffff38;width:100%;margin-top:10px}
 h1{font-size:31px;line-height:1.1;letter-spacing:-1px;margin:0 0 8px}h2{font-size:25px;line-height:1.2;margin:0 0 14px}.subtitle{margin:0 0 22px;color:#c2e2eb;font-size:14px}
 fieldset{padding:0;border:0;margin:0}legend{text-transform:uppercase;letter-spacing:.1em;font-size:11px;font-weight:750;margin-bottom:10px}
@@ -39,6 +39,7 @@ body.menu-open #map{grid-column:1}body.menu-open .setup{grid-column:2}
 .join-panel,.victory{position:fixed;z-index:8;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,94vw);max-height:90dvh;overflow:auto;padding:26px;border-radius:16px;box-shadow:0 12px 50px #18374444}
 .join-panel label{display:block;margin:16px 0 7px}.join-panel button,.victory button{width:100%;margin-top:12px}
 noscript{position:absolute;padding:20px;background:white;color:#222}
+.language-label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:15px 0;font-size:12px}.language-label select{background:#405765;color:white;border:1px solid #ffffff35;padding:7px;border-radius:6px}#local-menu>button{display:block;width:100%;margin:8px 0}#local-menu>label{font-size:12px;display:block;margin-top:15px}#save-name{width:100%;padding:8px;border-radius:6px;background:#102a35;color:white;border:1px solid #ffffff35}.save-slot{display:grid;grid-template-columns:1fr auto auto;gap:5px;align-items:center;margin:12px 0}.save-slot span{font-size:11px;overflow-wrap:anywhere}.save-slot button{font-size:11px;padding:5px;min-height:32px}#guide{border:1px solid #c7bc86;border-radius:15px;background:#f2efdf;color:#233e45;width:min(680px,94vw);max-height:85dvh;padding:25px;line-height:1.6}#guide::backdrop{background:#082c4077}#guide h3{margin-bottom:5px}#guide p{font-size:14px;margin-top:5px}#guide-close{position:sticky;bottom:0;background:#315769;width:100%}
 @media(max-width:899px){
  #game,body.choosing-map #game,body.menu-open #game{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
  #topbar{grid-template-columns:auto minmax(0,1fr);gap:4px 12px;padding:7px 10px}
@@ -68,3 +69,4 @@ noscript{position:absolute;padding:20px;background:white;color:#222}
  body.choosing-map #game{grid-template-columns:280px minmax(0,1fr)}body.choosing-map #map{grid-column:2}body.choosing-map .setup{grid-column:1;grid-row:2;max-height:100%}
  .four{grid-template-columns:repeat(2,1fr)}
 }
+.amount{display:grid;grid-template-columns:32px minmax(35px,1fr) 32px auto;gap:6px;margin-top:10px;align-items:center}.amount input{width:100%;min-width:0;grid-column:2;grid-row:1}.amount button{min-width:0;min-height:34px;padding:5px 7px}.amount #less{grid-column:1;grid-row:1}.amount #more{grid-column:3;grid-row:1}.amount #all{grid-column:4;grid-row:1}

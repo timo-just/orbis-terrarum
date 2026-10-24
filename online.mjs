@@ -1,5 +1,5 @@
 import {ONLINE_URL} from './online-config.mjs';
-import {apply,chooseStart} from './engine.mjs?v=perf-4';
+import {apply,chooseStart,undoOwner} from './engine.mjs?v=expansion-6';
 const advance=(state,action)=>action.kind==='draft'?chooseStart(state,action.source):apply(state,action);
 export class OnlineGame {
   constructor(onUpdate,onError){this.onUpdate=onUpdate;this.onError=onError;this.room=null;this.snapshot=null;this.confirmed=null;this.sending=false;this.timer=null;this.pending=[];this.batch=null;this.flushTimer=null;this.flushing=false;this.retryDelay=500;this.epoch=0;}
@@ -27,12 +27,12 @@ export class OnlineGame {
   project(meta={}){
     if(!this.confirmed)return;
     let state=this.confirmed.state;const kept=[];
-    for(const entry of this.pending){try{if(state.player!==this.confirmed.you)throw Error();state=advance(state,entry.action);kept.push(entry);}catch{this.onError('Der Spielstand wurde aktualisiert. Eine noch unbestätigte Aktion wurde verworfen.');}}
+    for(const entry of this.pending){try{if(state.player!==this.confirmed.you&&!(entry.action.kind==='undo'&&undoOwner(state)===this.confirmed.you))throw Error();state=advance(state,entry.action);kept.push(entry);}catch{this.onError('Der Spielstand wurde aktualisiert. Eine noch unbestätigte Aktion wurde verworfen.');}}
     if(kept.length!==this.pending.length){this.batch=null;kept.forEach(p=>p.batch=null);}
     this.pending=kept;this.snapshot={...this.confirmed,state};this.onUpdate(this.snapshot,{...meta,saving:this.saving});
   }
   enqueue(action){
-    if(!this.myTurn)throw Error('Du bist nicht am Zug.');
+    if(!this.myTurn&&!(action.kind==='undo'&&undoOwner(this.snapshot.state)===this.color))throw Error('Du bist nicht am Zug.');
     if(this.pending.length>=128)throw Error('Bitte kurz warten, bis die Aktionen gespeichert sind.');
     const state=advance(this.snapshot.state,action);this.pending.push({action:structuredClone(action),batch:null});
     this.snapshot={...this.snapshot,state};this.onUpdate(this.snapshot,{event:'action',action,saving:true});this.scheduleFlush(35);

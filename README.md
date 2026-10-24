@@ -66,13 +66,13 @@ Auf Touchgeräten sind zusätzlich Zweifinger-Zoom und Verschieben möglich. Im 
 - Die Farben sind Blau, Rot, Grün, Gelb, Lila und Schwarz. Startprovinzen werden in dieser Reihenfolge gewählt. Die Züge laufen anschließend **umgekehrt**. Jede Startprovinz erhält fünf Soldaten.
 - Ab der zweiten Runde gibt es pro Zug einen Nachschubpunkt je eigener Provinz, mit Kaserne zwei. Alle Punkte werden zunächst frei als Soldaten auf eigene Provinzen verteilt. Erst danach sind normale Aktionen erlaubt.
 - Soldaten und Bogenschützen bewegen sich einmal, Reiter zweimal pro eigenem Zug. Bereits verbrauchte Einheiten des aktiven Spielers sind grau; Reiter nach dem ersten Schritt halb grau.
-- **3 Soldaten → 1 Reiter**, **1 Reiter → 2 Soldaten**, **8 Soldaten → 1 Bogenschütze**, **1 Bogenschütze → 5 Soldaten**. Verbrauchte Bewegung wird beim Umtausch übernommen.
+- **3 Soldaten → 1 Reiter**, **1 Reiter → 2 Soldaten**, **5 Soldaten → 1 Bogenschütze**, **1 Bogenschütze → 3 Soldaten**. Verbrauchte Bewegung wird beim Umtausch übernommen.
 - Reiter und Soldaten sind im Nahkampf gleich stark. Bogenschützen geben keine Nahkampfverteidigung; bei einer Eroberung werden sie vernichtet. Bogenschützen können nur in eigene Provinzen ziehen.
-- Jeder Bogenschütze schießt einmal zu Beginn des eigenen Zuges auf einen direkt verbundenen Gegner. Berge blockieren diese Verbindung; Flüsse und Mauern verhindern Beschuss nicht. Mehrere Schützen dürfen dieselbe Provinz treffen.
+- Bogenschützen werden manuell ausgewählt: Ein Klick auf eine direkt verbundene gegnerische Provinz feuert die gewählte Anzahl Schüsse ab. Jeder Schütze darf pro eigenem Zug entweder einmal ziehen oder einmal schießen. Berge blockieren diese Verbindung, Flüsse und Mauern nicht. Rücktausch gibt drei Soldaten.
 - Flüsse halbieren einen feindlichen Angriff, Mauern auf der Zielseite ebenfalls. Zusammen bleibt **ein Viertel** der Angriffskraft. Bruchteile werden abgerundet; bei gleicher Angriffskraft und Verteidigung bleibt die Provinz beim Verteidiger.
 - **Kaserne: 10 Soldaten.** Erhöht die Produktion dieser Provinz auf zwei Nachschubpunkte. Wird mit der Provinz übernommen.
-- **Mauer: 5 Soldaten**, Abriss gibt **2** zurück. Sie liegt auf der Innenseite einer passierbaren Grenze und schützt nur bei Angriffen auf diese Provinz.
-- **Grenzturm: 5 Soldaten**, Abriss gibt **2** zurück. Ein Turm je Provinz und Ecke; mehrere Provinzen können an derselben Ecke je einen eigenen Turm haben. Mauern verhindern ihn nicht. Er feuert einmal pro eigenem Zug auf eine gegnerische Provinz an dieser Ecke. Ein Besitzerwechsel hebt die Sperre bis zum nächsten Zug des getroffenen Spielers nicht auf.
+- **Mauer: 5 Soldaten**, Abriss gibt **2 verbrauchte Soldaten** zurück. Sie liegt auf der Innenseite einer passierbaren Grenze und schützt nur bei Angriffen auf diese Provinz.
+- **Grenzturm: 5 Soldaten**, Abriss gibt **2 verbrauchte Soldaten** zurück. Ein Turm je Provinz und Ecke; mehrere Provinzen können an derselben Ecke je einen eigenen Turm haben. Mauern verhindern ihn nicht. Er feuert einmal pro eigenem Zug auf eine gegnerische Provinz an dieser Ecke. Ein Besitzerwechsel hebt die Sperre bis zum nächsten Zug des getroffenen Spielers nicht auf.
 - **Fahne verlegen: 10 Soldaten** aus der neuen eigenen Provinz. Nach Eroberung einer Fahne gehen alle übrigen Provinzen und Gebäude dieser Fraktion an den Eroberer. Die Einheiten des besiegten Spielers werden gelöscht, überlebende Angreifer bleiben erhalten.
 - Ausgeschiedene Spieler werden übersprungen. Die letzte aktive Fraktion gewinnt. Nach 150 Runden endet eine Partie unentschieden; der Einzelspielermodus bleibt bis dahin spielbar.
 - Die Karte besteht aus vollständigen unregelmäßigen Voronoi-Zellen. Seen belegen jeweils ein bis drei Wasserzellen und können zusammenwachsen. Flüsse verlaufen zusammenhängend auf Kanten und enden an Küste oder See. Gebirge sperren Übergänge.
@@ -95,3 +95,13 @@ python tools/browser-web-check.py
 ```
 
 Der erste Befehl prüft Regeln und Kartentopologie. Der zweite testet die tatsächliche Bedienung mit einem lokal installierten Chrome oder Edge und dem Python-Modul `websocket-client`. Er legt Screenshots und einen Bericht in `build/web-qa/` ab und beendet seinen Testserver anschließend wieder.
+
+## Erweiterte Bedienung
+
+Vor dem Start stehen Deutsch und Englisch sowie 40 bis 200 Provinzen zur Auswahl. Standard sind 100 Provinzen und fünf Seen. Gebirge erhalten immer ein zusammenhängendes Wegenetz; keine Provinz wird isoliert. Die Reiter Bewegen, Tauschen und Bauen trennen die Aktionen. Gold markiert gewählte Einheiten. Angriffsszenen dauern drei Sekunden und sperren andere Aktionen nicht.
+
+Rückgängig nimmt nur eigene jüngste Aktionen und das Zugende zurück. Sobald ein anderer Spieler handelt (insbesondere seinen ersten Nachschubsoldaten setzt), ist der vorherige Zug abgeschlossen.
+
+Im Menü gibt es eine ausführliche Anleitung, bis zu zwölf benannte lokale Speicherplätze, JSON-Download/-Import und komprimierte Momentaufnahme-Links. Solche Links enthalten den Stand beim Kopieren und synchronisieren nicht live. Nach dem ersten vollständigen Laden werden die Spieldateien für den Offlinebetrieb zwischengespeichert. Online-Lobbys benötigen weiter eine Verbindung; lokale Partien und gespeicherte Momentaufnahmen nicht.
+
+Zusätzliche Prüfungen: `node tools/expansion-checks.mjs` und `python tools/browser-expansion-check.py`.

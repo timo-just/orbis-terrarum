@@ -13,6 +13,7 @@ export function createRoomService(store,cryptoApi=globalThis.crypto){
     if(kind==='create'){
       const opts=input.settings||{},settings={};for(const [key,min,max] of [['players',2,6],['rivers',0,8],['mountains',0,10],['lakes',0,12]]){const v=opts[key];if(!Number.isInteger(v)||v<min||v>max)fail('Ungültige Karteneinstellungen.');settings[key]=v;}
       if(Number.isSafeInteger(opts.seed)&&opts.seed>=0)settings.seed=opts.seed;
+      settings.provinces=opts.provinces??100;if(!Number.isInteger(settings.provinces)||settings.provinces<40||settings.provinces>200)fail('Ungültige Provinzanzahl.');
       settings.players=6;
       const world=generateWorld(settings),row={id:room,revision:0,snapshot:{status:'lobby',settings,world,state:createState(world,settings.players),seats:[{color:1,name:nameOf(input.name),secret}]}};
       if(!await store.create(row))fail('Diese Lobby existiert bereits.',409);return view(row,1);
@@ -41,14 +42,14 @@ export function createRoomService(store,cryptoApi=globalThis.crypto){
           if(typeof input.name!=='string'||!input.name.trim())fail('Bitte einen Namen eingeben.');
           next.snapshot.seats.find(s=>s.color===color).name=nameOf(input.name);
         }else if(kind==='action'||kind==='actions'){
-          if(row.snapshot.status!=='play'||row.snapshot.state.player!==color)fail('Du bist nicht am Zug.',403);
+          if(row.snapshot.status!=='play')fail('Die Partie läuft noch nicht.',403);
           const actions=kind==='actions'?input.actions:[input.action];
           if(!Array.isArray(actions)||actions.length<1||actions.length>64)fail('Ungültige Aktionsliste.');
           if(kind==='actions'&&!validId(input.requestId))fail('Ungültige Aktionskennung.');
           for(const action of actions){
-            if(next.snapshot.state.player!==color)fail('Du bist nicht am Zug.',403);
+            if(next.snapshot.state.player!==color&&!(action?.kind==='undo'&&next.snapshot.state.undo?.at(-1)?.actor===color))fail('Du bist nicht am Zug.',403);
             if(!action||typeof action!=='object')fail('Aktion fehlt.');
-            try{next.snapshot.state=action.kind==='draft'?chooseStart(next.snapshot.state,action.source):apply(next.snapshot.state,action);}catch(error){fail(error.message);}
+            try{next.snapshot.state=action.kind==='draft'?chooseStart(next.snapshot.state,action.source):apply(next.snapshot.state,{...action,player:color});}catch(error){fail(error.message);}
             next.snapshot.lastAction=action;
           }
           if(kind==='actions')next.snapshot.recentRequests=[...(next.snapshot.recentRequests||[]),{id:input.requestId,player:color}].slice(-128);
