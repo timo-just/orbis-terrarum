@@ -21,7 +21,7 @@ function topology(cells){const map=new Map(),adj=cells.map(()=>new Set()),coast=
 }
 function connected(adj,removed){const start=adj.findIndex((_,i)=>!removed.has(i));if(start<0)return false;const seen=new Set([start]),q=[start];for(let i=0;i<q.length;i++)for(const n of adj[q[i]])if(!removed.has(n)&&!seen.has(n)){seen.add(n);q.push(n);}return seen.size===adj.length-removed.size;}
 export function generateWorld(options={}) {
-  const seed=options.seed??Date.now(),r=rng(seed),lakeCount=Number(options.lakes??5),riverCount=Number(options.rivers??2),mountains=Number(options.mountains??3),provinceCount=Math.max(40,Math.min(200,Math.round(options.provinces??100))),sites=[];
+  const seed=options.seed??Date.now(),r=rng(seed),lakeCount=Number(options.lakes??5),riverCount=Number(options.rivers??2),mountains=Number(options.mountains??3),provinceCount=Math.max(options.tutorial===true?20:40,Math.min(200,Math.round(options.provinces??100))),sites=[];
   let attempts=0;
   while(sites.length<400){if(++attempts>300000)throw Error('Karte konnte nicht erzeugt werden. Bitte erneut versuchen.');const p={x:r()*22,y:r()*22};if(sites.every(q=>dist2(p,q)>.75**2))sites.push(p);}
   function tessellate(){return sites.map((a,i)=>{let poly=[{x:0,y:0},{x:22,y:0},{x:22,y:22},{x:0,y:22}];sites.forEach((b,j)=>{if(i!==j&&Math.abs(a.x-b.x)<4&&Math.abs(a.y-b.y)<4)poly=clip(poly,a,b);});return poly;});}

@@ -7,7 +7,7 @@
   <meta name="description" content="Orbis Terrarum: rundenbasierte Eroberung auf zufälligen Voronoi-Karten. Für ein bis sechs Menschen an einem Bildschirm.">
   <title>Orbis Terrarum</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=cavalry-29">
+  <link rel="stylesheet" href="./style.css?v=tutorial-30">
 </head>
 <body>
   <main id="game" aria-label="Orbis Terrarum">
@@ -18,11 +18,15 @@
       <div id="turn-banner" hidden aria-live="polite"><div id="reinforcement-total" hidden><strong id="reinforcement-count"></strong><span id="reinforcement-label">Soldaten verteilen</span></div></div>
     </header>
     <canvas id="map" aria-label="Spielkarte. Mausrad zum Zoomen, ziehen zum Verschieben. Provinzen mit einem Klick auswählen." tabindex="0"></canvas>
+    <section id="tutorial-panel" hidden data-no-translate aria-label="Tutorial">
+      <div class="tutorial-copy"><div class="tutorial-meta"><span id="tutorial-progress"></span><select id="tutorial-input" aria-label="Tutorial input"><option value="pc">PC: Mouse + keyboard</option><option value="touch">Touch</option></select><select id="tutorial-language" aria-label="Language"><option value="de">Deutsch</option><option value="en">English</option></select></div><h2 id="tutorial-title"></h2><p id="tutorial-text"></p><strong id="tutorial-result" role="status"></strong><textarea id="tutorial-link" readonly hidden aria-label="Snapshot link"></textarea></div>
+      <div class="tutorial-buttons"><button id="tutorial-next" class="primary"></button><button id="tutorial-retry"></button><button id="tutorial-exit"></button></div>
+    </section>
     <section id="setup" class="panel setup" aria-label="Neue Partie">
       <h1>Orbis Terrarum</h1>
-      <p class="subtitle">Eine Welt. Eure Entscheidungen.</p>
       <label class="language-label" for="language">Sprache / Language <select id="language"><option value="de">Deutsch</option><option value="en">English</option></select></label>
-      <label for="game-mode">Spielmodus <select id="game-mode"><option value="human">Offline gegen Menschen</option><option value="ai">Offline gegen KI</option><option value="online">Online Lobby</option></select></label><p id="mode-help" class="hint"></p>
+      <button id="tutorial-start" class="tutorial-entry" disabled>Tutorial</button>
+      <label class="mode-label" for="game-mode">Spielmodus <select id="game-mode"><option value="human">Offline gegen Menschen</option><option value="ai">Offline gegen KI</option><option value="online">Online Lobby</option></select></label><p id="mode-help" class="hint"></p>
       <fieldset><legend>Spielerzahl</legend><div id="players" class="six"></div></fieldset>
       <p class="hint">Gemeinsam an einem Bildschirm · 1 Spieler = Übungsmodus</p>
       <div class="sliders">
@@ -84,6 +88,6 @@
     <dialog id="guide"><h2>Anleitung</h2><div id="guide-content"></div><button id="guide-close">Schließen</button></dialog>
     <noscript>Für Orbis Terrarum muss JavaScript aktiviert sein.</noscript>
   </main>
-  <script type="module" src="./app.mjs?v=cavalry-29"></script>
+  <script type="module" src="./app.mjs?v=tutorial-30"></script>
 </body>
 </html>
