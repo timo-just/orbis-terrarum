@@ -1,20 +1,20 @@
-import {preferredUnit,unitEnabled,provinceCount,factionName,animationEnd} from './presentation.mjs?v=vector-28';
-import {makeVolley,drawVolleys} from './volleys.mjs?v=vector-28';
-import {drawRivers} from './rivers.mjs?v=vector-28';
-import {drawFlag,flagPosition} from './flags.mjs?v=vector-28';
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=vector-28';
-import {drawOrnateFrame} from './frame.mjs?v=vector-28';
-import {drawParchment} from './parchment.mjs?v=vector-28';
-import {drawMountain} from './mountains.mjs?v=vector-28';
-import {drawUnit as unit} from './units.mjs?v=vector-28';
-import {drawBarracks} from './barracks.mjs?v=vector-28';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=vector-28';
-import {guideHTML} from './guide.mjs?v=vector-28';
-import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=vector-28';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=vector-28';
-import {OnlineGame} from './online.mjs?v=vector-28';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=vector-28';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=vector-28';
+import {preferredUnit,unitEnabled,provinceCount,factionName,animationEnd,groupBadges} from './presentation.mjs?v=cavalry-29';
+import {makeVolley,drawVolleys} from './volleys.mjs?v=cavalry-29';
+import {drawRivers} from './rivers.mjs?v=cavalry-29';
+import {drawFlag,flagPosition} from './flags.mjs?v=cavalry-29';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=cavalry-29';
+import {drawOrnateFrame} from './frame.mjs?v=cavalry-29';
+import {drawParchment} from './parchment.mjs?v=cavalry-29';
+import {drawMountain} from './mountains.mjs?v=cavalry-29';
+import {drawUnit as unit} from './units.mjs?v=cavalry-29';
+import {drawBarracks} from './barracks.mjs?v=cavalry-29';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=cavalry-29';
+import {guideHTML} from './guide.mjs?v=cavalry-29';
+import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=cavalry-29';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=cavalry-29';
+import {OnlineGame} from './online.mjs?v=cavalry-29';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner,cavalryVia} from './engine.mjs?v=cavalry-29';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=cavalry-29';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -78,14 +78,14 @@ function drawScene(){g.clearRect(0,0,S,S);const nextTerrainKey=world.seed;if(ter
   g.save();const riverClip=new Path2D();paths.forEach(path=>riverClip.addPath(path));g.clip(riverClip);drawRivers(g,world.edges,S);g.restore();
   terrainContext.clearRect(0,0,S,S);terrainContext.drawImage(scene,0,0);terrainKey=nextTerrainKey;}
 }
-function drawPieces(g){world.coast.forEach(e=>{drawLine(g,e.a,e.b,5,'#d4d2a6');drawLine(g,e.a,e.b,1.7,'#eff5db');});if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.shadow);g.fillStyle='#357747';g.fill(vegetation.leaves);g.fillStyle='#50894a';g.fill(vegetation.mid);g.fillStyle='#77a55d';g.fill(vegetation.light);g.strokeStyle='#b7ce9670';g.lineWidth=.9;g.lineCap='round';g.lineJoin='round';g.stroke(vegetation.grass);}g.save();const clip=new Path2D();paths.forEach(path=>clip.addPath(path));g.clip(clip);g.restore();g.strokeStyle='#f6fbf0';g.lineWidth=1.1;paths.forEach(path=>g.stroke(path));g.save();const riverClip=new Path2D();paths.forEach(path=>riverClip.addPath(path));g.clip(riverClip);drawRivers(g,world.edges,S);g.restore();
+function drawPieces(g){world.coast.forEach(e=>{drawLine(g,e.a,e.b,5,'#d4d2a6');drawLine(g,e.a,e.b,1.7,'#eff5db');});if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.shadow);g.fillStyle='#357747';g.fill(vegetation.leaves);g.fillStyle='#50894a';g.fill(vegetation.mid);g.fillStyle='#77a55d';g.fill(vegetation.light);g.strokeStyle='#f3eedb66';g.lineWidth=.75;g.lineCap='round';g.lineJoin='round';g.stroke(vegetation.grass);}g.save();const clip=new Path2D();paths.forEach(path=>clip.addPath(path));g.clip(clip);g.restore();g.strokeStyle='#f6fbf0';g.lineWidth=1.1;paths.forEach(path=>g.stroke(path));g.save();const riverClip=new Path2D();paths.forEach(path=>riverClip.addPath(path));g.clip(riverClip);drawRivers(g,world.edges,S);g.restore();
   state.walls.forEach(key=>{const [a,b]=key.split(':').map(Number),edge=edgeFor(a,b);if(!edge)return;g.save();g.clip(paths.get(a));drawJoinedWall(g,joinedWall(edge,a),COLORS[state.p[a].owner],S);g.restore();});
   if(selected!==null){g.strokeStyle='#fff';g.lineWidth=4;g.stroke(paths.get(selected));}
   const obstacles=state.p.map(()=>[]);
-  state.p.forEach((p,id)=>{if(p.barracks){const c=anchor(id),x=c.x-.012,y=c.y+.008;drawBarracks(g,x*S,y*S,COLORS[p.owner]);obstacles[id].push([x-.006,y-.009,x+.006,y+.009]);}});
+  state.p.forEach((p,id)=>{if(p.barracks){const c=anchor(id),x=c.x-.012,y=c.y+.008;g.save();g.clip(paths.get(id));drawBarracks(g,x*S,y*S,COLORS[p.owner]);g.restore();obstacles[id].push([x-.011,y-.01,x+.011,y+.016]);}});
   state.towers.forEach(t=>{const p=towerPoint(t);drawTower(g,p.x*S,p.y*S,COLORS[state.p[t.province].owner]);obstacles[t.province].push([p.x-.005,p.y-.008,p.x+.005,p.y+.008]);});
   for(let player=1;player<=state.players;player++){const id=state.flags[player];if(id<0)continue;if(!flagPositions.has(id)){const p=anchor(id);flagPositions.set(id,flagPosition(world.provinces[id],{x:p.x+11/S,y:p.y-3/S},S));}const p=flagPositions.get(id),x=p.x*S,y=p.y*S;drawFlag(g,x,y,COLORS[player]);obstacles[id].push([(x-4)/S,(y-22)/S,(x+14)/S,(y+3)/S]);}
-  if(!setup&&state.phase!=='draft')state.p.forEach((p,id)=>{const counts=displayCounts(id),positions=symbolPositions(id,Object.fromEntries(TYPES.map(t=>[t,p[t]])),obstacles[id]);piecePositions.set(id,positions);g.save();g.clip(paths.get(id));TYPES.forEach(t=>(positions[t]||[]).slice(0,counts[t]).forEach((pos,i)=>unit(g,t,pos.x*S,pos.y*S,COLORS[p.owner],shade(p,t,i,state.player),5.2,selected===id&&t===type&&i<amount)));const count=provinceCount(p);if(count>5){let c=anchor(id),badge={x:c.x,y:c.y+22/S};if(!inside(badge,world.provinces[id].cell))badge=c;g.font='600 9px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=2.5;g.strokeStyle='#f5eed3dd';g.strokeText(String(count),badge.x*S,badge.y*S);g.fillStyle='#263b46cc';g.fillText(String(count),badge.x*S,badge.y*S);}g.restore();});
+  if(!setup&&state.phase!=='draft')state.p.forEach((p,id)=>{const counts=displayCounts(id),positions=symbolPositions(id,Object.fromEntries(TYPES.map(t=>[t,p[t]])),obstacles[id]);piecePositions.set(id,positions);g.save();g.clip(paths.get(id));TYPES.forEach(t=>(positions[t]||[]).slice(0,counts[t]).forEach((pos,i)=>unit(g,t,pos.x*S,pos.y*S,COLORS[p.owner],shade(p,t,i,state.player),5.2,selected===id&&t===type&&i<amount)));for(const badge of groupBadges(counts,positions)){g.font='600 9px system-ui';g.textAlign='center';g.textBaseline='middle';g.lineWidth=2.7;g.strokeStyle='#f5eed3ee';g.strokeText(String(badge.count),badge.x*S,badge.y*S);g.fillStyle='#243642';g.fillText(String(badge.count),badge.x*S,badge.y*S);}g.restore();});
   if(operation&&selected!==null){for(const target of targets()){if(operation.includes('Tower')){const p=towerPoint({province:selected,corner:target});g.fillStyle='#fff';g.beginPath();g.arc(p.x*S,p.y*S,6,0,Math.PI*2);g.fill();g.strokeStyle='#263d4c';g.lineWidth=1.4;g.stroke();}else{const edge=edgeFor(selected,target);if(edge)drawLine(g,edge.a,edge.b,5,'#fff9ae');}}}
 }
 function render(time){framePending=false;ctx.setTransform(DPR,0,0,DPR,-viewport.left*DPR,-viewport.top*DPR);ctx.clearRect(viewport.left,viewport.top,W,H);drawOcean(ctx);
@@ -156,7 +156,7 @@ function selectAt(x,y,all=false){if(isAITurn()||setup||menuOpen||onlinePending||
   if(all&&p.owner===state.player){selected=id;type=preferredUnit(p);amount=available(p,type);dirty=true;updateUI();requestRender();return;}
   if(selected===id){const n=available(p,type);amount=n?(amount>=n?0:amount+1):0;updateUI();requestRender();return;}
   if(selected===null||amount===0){if(p.owner===state.player){selected=id;type=preferredUnit(p);amount=Math.min(1,available(p,type));tab='move';dirty=true;updateUI();requestRender();}else announce('Wähle zuerst eine eigene Provinz.');return;}
-  const action={kind:type==='archer'&&p.owner!==state.player?'shoot':'move',source:selected,target:id,amount,type};if(legal(state,action))commit(action);else if(p.owner===state.player){selected=id;type=preferredUnit(p);amount=Math.min(1,available(p,type));dirty=true;updateUI();requestRender();}else announce(type==='archer'?'Wähle eine direkt benachbarte gegnerische Provinz zum Schießen.':'Nur direkt verbundene Nachbarn können angegriffen werden. Gebirge blockieren den Weg.');
+  const action={kind:type==='archer'&&p.owner!==state.player?'shoot':'move',source:selected,target:id,amount,type};if(type==='horse'){const via=cavalryVia(state,selected,id);if(via!==null)action.via=via;}if(legal(state,action))commit(action);else if(action.via!==undefined){announce(getLanguage()==='de'?'Alle gewählten Reiter brauchen für diesen Weg noch beide Bewegungspunkte.':'All selected cavalry need both movement points for this route.');}else if(p.owner===state.player){selected=id;type=preferredUnit(p);amount=Math.min(1,available(p,type));dirty=true;updateUI();requestRender();}else announce(type==='archer'?'Wähle eine direkt benachbarte gegnerische Provinz zum Schießen.':'Nur direkt verbundene Nachbarn können angegriffen werden. Gebirge blockieren den Weg.');
 }
 function clearSelection(){if(!state)return;selected=null;amount=0;operation=null;status=phaseText();dirty=true;updateUI();requestRender();}
 function zoomAt(x,y,next){const point=screenToWorld(x,y);zoom=Math.max(1,Math.min(4,next));pan.x=x-mapCenter.x-(point.x-mapOrigin.x)*mapSize*zoom;pan.y=y-mapCenter.y-(point.y-mapOrigin.y)*mapSize*zoom;if(zoom<=1)pan={x:0,y:0};requestRender();}
@@ -275,4 +275,4 @@ $('guide-local').onclick=$('guide-online').onclick=openGuide;$('guide-close').on
 for(const id of ['language','join-language','lobby-language']){$(id).value=getLanguage();$(id).onchange=()=>setLanguage($(id).value);}document.addEventListener('orbis-language',()=>{for(const id of ['language','join-language','lobby-language'])$(id).value=getLanguage();if($('guide').open)$('guide-content').innerHTML=guideHTML(getLanguage());if(state&&!setup)updateUI();if(setup)updateMode();});applyTranslations();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
-function makeVegetation(){const v={shadow:new Path2D(),leaves:new Path2D(),mid:new Path2D(),light:new Path2D(),grass:new Path2D()};world.provinces.forEach((p,id)=>{const random=rng((world.seed+777+Math.imul(id+1,2654435761))>>>0),mountains=world.edges.filter(e=>e.mountain&&e.provinces.includes(id));for(let j=0;j<8;j++){const x=p.home.x+(random()-.5)*.09,y=p.home.y+(random()-.5)*.08,r=4/S;if(![[x-r,y-r],[x+r,y-r],[x-r,y+r],[x+r,y+r]].every(([x,y])=>inside({x,y},p.cell))||mountains.some(e=>segmentDistance({x,y},e.a,e.b)<.00008))continue;if(p.biome==='forest'){v.shadow.moveTo(x*S+4,y*S+2);v.shadow.ellipse(x*S+1,y*S+2,3,4,0,0,Math.PI*2);const polygon=(path,points)=>{points.forEach(([a,b],i)=>i?path.lineTo(x*S+a*.45,y*S+b*.45):path.moveTo(x*S+a*.45,y*S+b*.45));path.closePath();};polygon(v.leaves,[[-6,-4],[1,-8],[7,-3],[6,5],[-2,7],[-7,2]]);polygon(v.mid,[[-6,-4],[1,-8],[2,1],[-7,2]]);polygon(v.light,[[-6,-4],[1,-8],[-1,-1]]);}else{v.grass.moveTo(x*S-1,y*S);v.grass.lineTo(x*S,y*S+3);v.grass.lineTo(x*S+2,y*S-1);}}});return v;}
+function makeVegetation(){const v={shadow:new Path2D(),leaves:new Path2D(),mid:new Path2D(),light:new Path2D(),grass:new Path2D()};world.provinces.forEach((p,id)=>{const random=rng((world.seed+777+Math.imul(id+1,2654435761))>>>0),mountains=world.edges.filter(e=>e.mountain&&e.provinces.includes(id));for(let j=0;j<8;j++){const x=p.home.x+(random()-.5)*.09,y=p.home.y+(random()-.5)*.08,r=4/S;if(![[x-r,y-r],[x+r,y-r],[x-r,y+r],[x+r,y+r]].every(([x,y])=>inside({x,y},p.cell))||mountains.some(e=>segmentDistance({x,y},e.a,e.b)<.00008))continue;if(p.biome==='forest'){v.shadow.moveTo(x*S+4,y*S+2);v.shadow.ellipse(x*S+1,y*S+2,3,4,0,0,Math.PI*2);const polygon=(path,points)=>{points.forEach(([a,b],i)=>i?path.lineTo(x*S+a*.45,y*S+b*.45):path.moveTo(x*S+a*.45,y*S+b*.45));path.closePath();};polygon(v.leaves,[[-6,-4],[1,-8],[7,-3],[6,5],[-2,7],[-7,2]]);polygon(v.mid,[[-6,-4],[1,-8],[2,1],[-7,2]]);polygon(v.light,[[-6,-4],[1,-8],[-1,-1]]);}else{v.grass.moveTo(x*S-1.8,y*S-2.5);v.grass.lineTo(x*S,y*S+2.2);v.grass.lineTo(x*S+2.4,y*S-3.3);}}});return v;}

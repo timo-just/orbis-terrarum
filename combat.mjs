@@ -1,13 +1,15 @@
-import {segmentDistance} from './world.mjs?v=vector-28';
+import {segmentDistance} from './world.mjs?v=cavalry-29';
 export function makeBattle(action,before,after,world,now=performance.now()){
- const edge=world.edges.find(e=>e.provinces.includes(action.source)&&e.provinces.includes(action.target));if(!edge)return null;
+ const edge=world.edges.find(e=>e.provinces.includes(action.source)&&e.provinces.includes(action.via??action.target));if(!edge)return null;
  const from=world.provinces[action.source].home,to=world.provinces[action.target].home,mid={x:(edge.a.x+edge.b.x)/2,y:(edge.a.y+edge.b.y)/2},d=Math.hypot(to.x-from.x,to.y-from.y)||1,axis={x:(to.x-from.x)/d,y:(to.y-from.y)/d};
  const enemy=before.p[action.target].owner!==before.player,old=before.p[action.target],current=after.p[action.target],captured=current.owner===before.player;
  const cell=world.provinces[action.target].cell;const radius=cell?Math.sqrt(Math.min(...cell.map((p,i)=>segmentDistance(to,p,cell[(i+1)%cell.length])))):.05;
  const ownership=Array.isArray(before.p)?before.p.flatMap((p,id)=>p.owner!==after.p[id].owner?[[id,p.owner]]:[]):[[action.target,old.owner]];
- return {ownership,radius,action,start:now,duration:enemy?3000:650,from,to,mid,axis,enemy,owner:before.player,defender:old.owner,old:{...old},hidden:enemy?{soldier:current.soldier,horse:current.horse,archer:current.archer}:{soldier:0,horse:0,archer:0,[action.type]:action.amount},survivors:enemy?(captured?current[action.type]:0):action.amount,defenderDead:enemy?(captured?old.soldier+old.horse+old.archer:old.soldier+old.horse+old.archer-current.soldier-current.horse-current.archer):0};
+ const second=action.via===undefined?null:world.edges.find(e=>e.provinces.includes(action.via)&&e.provinces.includes(action.target));const route=second?[from,mid,world.provinces[action.via].home,{x:(second.a.x+second.b.x)/2,y:(second.a.y+second.b.y)/2},to]:null;
+ return {route,ownership,radius,action,start:now,duration:enemy?3000:route?1100:650,from,to,mid,axis,enemy,owner:before.player,defender:old.owner,old:{...old},hidden:enemy?{soldier:current.soldier,horse:current.horse,archer:current.archer}:{soldier:0,horse:0,archer:0,[action.type]:action.amount},survivors:enemy?(captured?current[action.type]:0):action.amount,defenderDead:enemy?(captured?old.soldier+old.horse+old.archer:old.soldier+old.horse+old.archer-current.soldier-current.horse-current.archer):0};
 }
 const mix=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+function alongRoute(points,t){const lengths=points.slice(1).map((p,i)=>Math.hypot(p.x-points[i].x,p.y-points[i].y)),total=lengths.reduce((n,v)=>n+v,0);let distance=Math.max(0,Math.min(1,t))*total;for(let i=0;i<lengths.length;i++){if(distance<=lengths[i]||i===lengths.length-1)return mix(points[i],points[i+1],lengths[i]?distance/lengths[i]:1);distance-=lengths[i];}return points.at(-1);}
 const clamp=t=>Math.max(0,Math.min(1,t));
 export function drawBattles(g,battles,time,colors,drawUnit,positions,S){
  for(const b of battles){const t=clamp((time-b.start)/b.duration),side={x:-b.axis.y,y:b.axis.x},{action:a}=b;
@@ -17,7 +19,7 @@ export function drawBattles(g,battles,time,colors,drawUnit,positions,S){
   const end=(type,i)=>positions.get(a.target)?.[type]?.[i+(b.enemy?0:b.old[type])]||{x:b.to.x+(i%5-2)*.006,y:b.to.y+Math.floor(i/5)*.006};
   function actor(type,i,n,attacker,dead,slot=i){
     const base={x:front.x+b.axis.x*radius*(attacker?-.3:.06),y:front.y+b.axis.y*radius*(attacker?-.3:.06)},line=formation(base,slot,n,attacker?-1:1),collision={x:front.x+side.x*((slot%7)-Math.min(6,laneCount-1)/2)*spacing,y:front.y+side.y*((slot%7)-Math.min(6,laneCount-1)/2)*spacing};let p;
-    if(!b.enemy){const u=clamp(t*1.3-i/Math.max(1,n)*.25);p=u<.5?mix(b.from,b.mid,u*2):mix(b.mid,end(type,i),(u-.5)*2);}
+    if(!b.enemy){const u=clamp(t*1.3-i/Math.max(1,n)*.25);p=b.route?(u<.85?alongRoute(b.route,u/.85):mix(b.to,end(type,i),(u-.85)/.15)):u<.5?mix(b.from,b.mid,u*2):mix(b.mid,end(type,i),(u-.5)*2);}
     else if(t<.28){if(attacker){const delay=.06*i/Math.max(1,n-1),u=clamp((t-delay)/(.28-delay));p=u<.5?mix(b.from,b.mid,u*2):mix(b.mid,line,(u-.5)*2);}else p=line;}
     else if(t<.42)p=line;
     else if(t<.65)p=mix(line,collision,clamp((t-.42)/.23));

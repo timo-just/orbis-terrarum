@@ -30,6 +30,11 @@ export function divisor(s,from,to) {
   if(s.p[from].owner===s.p[to].owner)return 1;
   return (s.links[from].some(l=>l.target===to&&l.river)?2:1)*(s.walls.includes(wallKey(to,from))?2:1);
 }
+// A two-step shortcut crosses only owned, traversable provinces.
+export function cavalryVia(s,source,target){
+ if(source===target||s.p[source]?.owner!==s.player||s.p[target]?.owner!==s.player||s.links[source].some(l=>l.target===target))return null;
+ return s.links[source].map(l=>l.target).sort((a,b)=>a-b).find(id=>s.p[id].owner===s.player&&s.links[id].some(l=>l.target===target))??null;
+}
 export function legal(s,a) {
   if(a.kind==='undo')return s.phase==='play'&&undoOwner(s)>0&&undoOwner(s)===(a.player??s.player);
   if(s.phase!=='play'||s.drawn||winner(s)!==null)return false;
@@ -38,6 +43,7 @@ export function legal(s,a) {
   if(a.kind==='deploy')return false;
   if(a.kind==='pass')return true;
   if(!own)return false;
+  if(a.kind==='move'&&a.via!==undefined)return a.type==='horse'&&Number.isInteger(a.amount)&&a.amount>0&&a.amount<=p.horse-p.horseOnce-p.horseExhausted&&Number.isInteger(a.via)&&a.source!==a.target&&s.p[a.target]?.owner===s.player&&s.p[a.via]?.owner===s.player&&a.source!==a.via&&a.target!==a.via&&s.links[a.source].some(l=>l.target===a.via)&&s.links[a.via].some(l=>l.target===a.target);
   if(a.kind==='convert')return ({horse:p.soldier>=3,archer:p.soldier>=5,footHorse:p.horse>=1,footArcher:p.archer>=1})[a.conversion]===true;
   if(a.kind==='shoot')return Number.isInteger(a.amount)&&a.amount>0&&a.amount<=available(p,'archer')&&s.links[a.source].some(l=>l.target===a.target)&&s.p[a.target].owner>0&&s.p[a.target].owner!==s.player&&total(s.p[a.target])>0;
   if(a.kind==='demolishBarracks')return p.barracks===true;
@@ -90,6 +96,7 @@ function applyRaw(s,a) {
   if(a.kind==='demolishWall'){add(p,'soldier',2,0,2);n.walls=n.walls.filter(w=>w!==wallKey(a.source,a.target));return n;}
   if(a.kind==='tower'){spend(p,5);n.towers.push({province:a.source,corner:a.target});return n;}
   if(a.kind==='demolishTower'){add(p,'soldier',2,0,2);n.towers=n.towers.filter(t=>!(t.province===a.source&&t.corner===a.target));return n;}
+  if(a.kind==='move'&&a.via!==undefined){p.horse-=a.amount;add(n.p[a.target],'horse',a.amount,0,a.amount);return n;}
   const target=n.p[a.target],spent=remove(p,a.type,a.amount,true),fresh=a.amount-spent[0];
   if(target.owner===s.player)add(target,a.type,a.amount,fresh,spent[0]);else{
     const effective=Math.floor(a.amount/divisor(s,a.source,a.target)),defence=strength(target),losses=Math.min(effective,defence),foot=Math.min(losses,target.soldier);
