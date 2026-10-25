@@ -1,0 +1,42 @@
+{
+  "completed": "2026-10-25T06:30:31.243Z",
+  "modelVersion": 2,
+  "trainingGenerations": 1840,
+  "simulatedGamesBeforeReleaseEvaluation": 54632,
+  "releaseEvaluationGames": 36,
+  "reports": {
+    "legacy": {
+      "games": 16,
+      "wins": 16,
+      "losses": 0,
+      "draws": 0,
+      "cutoffs": 0,
+      "score": 1
+    },
+    "baseline": {
+      "games": 8,
+      "wins": 8,
+      "losses": 0,
+      "draws": 0,
+      "cutoffs": 0,
+      "score": 1
+    },
+    "standard": {
+      "games": 8,
+      "wins": 8,
+      "losses": 0,
+      "draws": 0,
+      "cutoffs": 0,
+      "score": 1
+    },
+    "multiplayer": {
+      "games": 4,
+      "wins": 3,
+      "losses": 1,
+      "draws": 0,
+      "cutoffs": 0,
+      "score": 0.5
+    }
+  },
+  "note": "Fresh test maps after reinforcement flag-defense correction; these are software-opponent results, not human win rates."
+}

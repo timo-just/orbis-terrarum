@@ -1,4 +1,4 @@
-import {dist2} from './world.mjs?v=ai-25';
+import {dist2} from './world.mjs?v=ai-26';
 // Closest point to the corner in a polygon inset by the tower's full footprint.
 export function towerAnchor(cell,corner,radius){
  let area=0;cell.forEach((a,i)=>{const b=cell[(i+1)%cell.length];area+=a.x*b.y-b.x*a.y;});

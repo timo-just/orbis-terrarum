@@ -1,34 +1,32 @@
-# Offline AI
+# Offline AI, version 2
 
-Choose **Offline vs AI**. Blue is human-controlled; the remaining 1–5 colours
-are independent AI opponents. AI decisions run in a Web Worker, pause in the
-menu, and resume from offline saves. No API, account or server training is needed.
+Choose **Offline vs AI**. Blue is human-controlled; the other colours are
+independent AI opponents. Decisions run locally in a Web Worker, pause in the
+menu, and resume from offline saves. No server inference or API fees are needed.
 
-The initial model is a small linear action-value model, trained through
-evolutionary self-play on the current JavaScript engine. Candidate actions use
-the real legality checks and real simulation: movement budgets, rivers and
-walls, barracks, towers, conversions, manual archer targeting and flag defeat
-all follow the same rules as human actions. The move generator considers useful
-quantities rather than exhaustively searching every possible quantity.
+The opponent combines graph planning, exact two-action tactical lookahead and
+sixteen learned action-value weights. It uses the same game rules as human
+play, including cavalry, archer targeting, rivers, walls, towers, barracks,
+exchanges, demolition and flag defeat. A tactical guard reserves reinforcement
+for an immediately threatened flag when the pool can defend it.
 
-Reproduce training from the full project:
+The longer CPU league run used four workers, 1,840 generations and more than
+54,000 simulated games. Opening and supplied midgame positions covered
+40/70/100 provinces and 2/3/4/6 players. Candidate weights competed on the same
+maps and every seat, then faced the champion on separate maps. Actual victories
+drove selection. Draws and unfinished games were recorded separately.
 
-```powershell
-node tools/train-ai.mjs
-node tools/ai-checks.mjs
-python tools/browser-ai-check.py
-```
+The release was evaluated on additional maps after correcting the reinforcement
+safety issue. Aggregated outcomes are in ai-evaluation.json. These comparisons
+are against the previously shipped AI and the new untrained tactical baseline;
+they are not human win rates. Tactical regression and browser tests are
+additional release checks.
 
-The checked-in model was selected from 24 self-play training games (12
-challengers, both seats) and evaluated in 8 additional games on separate maps.
-Training uses 40-province maps; inference supports all map sizes and 2–6 players.
-The report is `build/ai-training-report.json` in the full project. This report
-records evaluation position scores, not a win rate: all eight evaluation games
-reached the evaluation action limit without a captured final flag.
+This is a domain-specific model, not an AlphaZero implementation or a proven
+optimal player. Five-player and 200-province play are supported but were not
+explicitly included in training. No training continues during browser play.
+AI turns are capped at forty actions to prevent excessive waiting or cycles.
 
-This is an initial trained opponent, not a proven expert. The limited training
-does not establish strength against humans, on 100–200-province maps or in
-multiplayer. Training does not keep running during browser play. Expanding
-training and using deeper search are possible next improvements. The browser
-caps AI actions at 40 per turn to prevent excessive waiting or action cycles;
-it does not grant extra movement, troops or hidden information.
+The full local project contains tools/AI-TRAINING.md, tools/train-ai-long.mjs
+and build/ai-long-run reports/checkpoints. The older tools/train-ai.mjs and
+docs/ai.mjs are retained as the version 1 training and baseline implementation.
