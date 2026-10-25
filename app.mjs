@@ -1,26 +1,26 @@
-import {TutorialSession,tutorialWorld,exercise,tutorialOpponentTurn} from './tutorial.mjs?v=tutorial-30';
-import {preferredUnit,unitEnabled,provinceCount,factionName,animationEnd,groupBadges} from './presentation.mjs?v=tutorial-30';
-import {makeVolley,drawVolleys} from './volleys.mjs?v=tutorial-30';
-import {drawRivers} from './rivers.mjs?v=tutorial-30';
-import {drawFlag,flagPosition} from './flags.mjs?v=tutorial-30';
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=tutorial-30';
-import {drawOrnateFrame} from './frame.mjs?v=tutorial-30';
-import {drawParchment} from './parchment.mjs?v=tutorial-30';
-import {drawMountain} from './mountains.mjs?v=tutorial-30';
-import {drawUnit as unit} from './units.mjs?v=tutorial-30';
-import {drawBarracks} from './barracks.mjs?v=tutorial-30';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=tutorial-30';
-import {guideHTML} from './guide.mjs?v=tutorial-30';
-import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=tutorial-30';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=tutorial-30';
-import {OnlineGame} from './online.mjs?v=tutorial-30';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner,cavalryVia} from './engine.mjs?v=tutorial-30';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=tutorial-30';
+import {TutorialSession,tutorialWorld,exercise,tutorialOpponentTurn,detectTutorialInput} from './tutorial.mjs?v=tutorial-31';
+import {preferredUnit,unitEnabled,provinceCount,factionName,animationEnd,groupBadges} from './presentation.mjs?v=tutorial-31';
+import {makeVolley,drawVolleys} from './volleys.mjs?v=tutorial-31';
+import {drawRivers} from './rivers.mjs?v=tutorial-31';
+import {drawFlag,flagPosition} from './flags.mjs?v=tutorial-31';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=tutorial-31';
+import {drawOrnateFrame} from './frame.mjs?v=tutorial-31';
+import {drawParchment} from './parchment.mjs?v=tutorial-31';
+import {drawMountain} from './mountains.mjs?v=tutorial-31';
+import {drawUnit as unit} from './units.mjs?v=tutorial-31';
+import {drawBarracks} from './barracks.mjs?v=tutorial-31';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=tutorial-31';
+import {guideHTML} from './guide.mjs?v=tutorial-31';
+import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=tutorial-31';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=tutorial-31';
+import {OnlineGame} from './online.mjs?v=tutorial-31';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner,cavalryVia} from './engine.mjs?v=tutorial-31';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=tutorial-31';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
 const LABELS={soldier:'Soldaten',horse:'Reiter',archer:'Bogenschützen'};
-let tutorialSession=null,tutorialIds=null,tutorialReturn=null,tutorialRetry=null,tutorialInput='click',tutorialSnapshot=null;
+let tutorialSession=null,tutorialIds=null,tutorialReturn=null,tutorialRetry=null,tutorialInput='click';
 let world,state,settings={players:4,rivers:2,mountains:3,lakes:5,provinces:100},selected=null,type='soldier',amount=0,operation=null,tab='move';
 let aiTurnKey='',aiTurnActions=0;
 let gameMode='human',aiWorker=null,aiRequest=0,aiPending=false,aiTimer=null,nextStarter=null,roundStarter=null;
@@ -262,15 +262,15 @@ function drawOcean(c){const r=paperRect(),w=mapBounds.w*mapSize+42,h=mapBounds.h
 function drawFrame(c){const r=paperRect();c.save();c.translate(r.x,r.y);c.scale(zoom,zoom);drawOrnateFrame(c,0,0,r.w/zoom,r.h/zoom);c.restore();}
 function drawLakes(c){const water=new Path2D(),shore=new Path2D(),edges=new Map();world.lakeCells.forEach(cell=>{water.addPath(polyPath(cell));cell.forEach((a,i)=>{const b=cell[(i+1)%cell.length],key=[`${a.x.toFixed(6)},${a.y.toFixed(6)}`,`${b.x.toFixed(6)},${b.y.toFixed(6)}`].sort().join(':');if(edges.has(key))edges.delete(key);else edges.set(key,[a,b]);});});for(const [a,b] of edges.values()){shore.moveTo(a.x*S,a.y*S);shore.lineTo(b.x*S,b.y*S);}c.fillStyle='#75b7b5';c.fill(water);c.save();c.clip(water);c.lineWidth=10;c.strokeStyle='#b5d7c4';c.stroke(shore);c.lineWidth=2;c.strokeStyle='#e4e2ba';c.stroke(shore);c.lineWidth=.9;c.strokeStyle='#eff4db99';for(let y=12;y<S;y+=38)for(let x=8;x<S;x+=58){c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+9,y+3,x+18,y);c.stroke();}c.restore();c.lineWidth=2;c.strokeStyle='#e3d9aa';c.stroke(shore);}
 function offlineData(){return {...(tutorialSession?{tutorial:true}:{}),version:2,world,state,settings:{...settings},language:getLanguage(),mode:online.room?'human':gameMode};}
-function loadOffline(data){validateSave(data);if(data.tutorial&&!tutorialSession){if(data.world.provinces.length!==20||data.world.seed!==813||data.state.players!==2)throw Error('Invalid tutorial save.');startTutorial();world=data.world;state=structuredClone(data.state);prepareWorld();tutorialSession.enter(tutorialContext());history.replaceState(null,'',location.pathname+location.search);updateUI();requestRender();return;}if(tutorialSession){if(!data.tutorial||data.world.seed!==world.seed||data.world.provinces.length!==20)throw Error(getLanguage()==='de'?'Bitte die Tutorial-Datei laden.':'Please load the tutorial file.');state=structuredClone(data.state);prepareWorld();tutorialObserve({kind:'import'});updateUI();requestRender();return;}cancelAI();gameMode=data.mode==='ai'?'ai':'human';$('game-mode').value=gameMode;online.leave();world=data.world;state=data.state;roundStarter=state.starter??state.players;settings={...settings,...data.settings};saved=data;hasGame=true;setup=false;menuOpen=false;selected=null;amount=0;operation=null;busy=null;prepareWorld();if(data.language)setLanguage(data.language);$('language').value=getLanguage();playerButtons();for(const key of ['rivers','mountains','lakes','provinces']){$(key).value=settings[key];$(`${key}-value`).textContent=settings[key];}$('connection').hidden=true;history.replaceState(null,'',location.pathname+location.search);status='Spielstand geladen.';save();updateUI();requestRender();}
+function loadOffline(data){validateSave(data);if(data.tutorial&&!tutorialSession){if(data.world.provinces.length!==20||data.world.seed!==813||data.state.players!==2)throw Error('Invalid tutorial save.');startTutorial();world=data.world;state=structuredClone(data.state);prepareWorld();tutorialSession.enter(tutorialContext());history.replaceState(null,'',location.pathname+location.search);updateUI();requestRender();return;}if(tutorialSession)throw Error(getLanguage()==='de'?'Im Tutorial werden keine Spielstaende geladen.':'Save loading is unavailable in the tutorial.');cancelAI();gameMode=data.mode==='ai'?'ai':'human';$('game-mode').value=gameMode;online.leave();world=data.world;state=data.state;roundStarter=state.starter??state.players;settings={...settings,...data.settings};saved=data;hasGame=true;setup=false;menuOpen=false;selected=null;amount=0;operation=null;busy=null;prepareWorld();if(data.language)setLanguage(data.language);$('language').value=getLanguage();playerButtons();for(const key of ['rivers','mountains','lakes','provinces']){$(key).value=settings[key];$(`${key}-value`).textContent=settings[key];}$('connection').hidden=true;history.replaceState(null,'',location.pathname+location.search);status='Spielstand geladen.';save();updateUI();requestRender();}
 function renderSaveSlots(){const slots=listSaves();$('save-slots').replaceChildren(...slots.map(slot=>{const row=document.createElement('div');row.className='save-slot';const text=document.createElement('span');text.textContent=(slot.name||'Partie')+' \u00b7 '+new Date(slot.date).toLocaleString(getLanguage());row.append(text,button('Laden',()=>loadOffline(slot.data)),button('L\u00f6schen',()=>{deleteSave(slot.id);renderSaveSlots();},false,'danger'));return row;}));}
 $('save-offline').onclick=()=>{try{downloadSave();$('save-status').textContent='Spielstand als Datei herunterladen';}catch(error){$('save-status').textContent=error.message;}};
-$('share-offline').onclick=async()=>{try{const link=await snapshotLink(offlineData());if(tutorialSession){$('tutorial-link').value=link;$('tutorial-link').hidden=false;tutorialObserve({kind:'snapshot'});}await navigator.clipboard.writeText(link);$('save-status').textContent='Momentaufnahme-Link kopiert.';}catch(error){$('save-status').textContent=error.message;}};
-function downloadSave(){if(online.saving||onlinePending)throw Error('Wait until your actions are synchronized.');const url=URL.createObjectURL(new Blob([JSON.stringify(offlineData())],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=tutorialSession?'orbis-terrarum-tutorial.json':'orbis-terrarum.json';a.click();if(tutorialSession){tutorialSnapshot=offlineData();tutorialObserve({kind:'export'});}setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$('share-offline').onclick=async()=>{if(tutorialSession)return;try{const link=await snapshotLink(offlineData());await navigator.clipboard.writeText(link);$('save-status').textContent='Momentaufnahme-Link kopiert.';}catch(error){$('save-status').textContent=error.message;}};
+function downloadSave(){if(tutorialSession)throw Error(getLanguage()==='de'?'Im Tutorial gibt es keine Speicherfunktion.':'Saving is unavailable in the tutorial.');if(online.saving||onlinePending)throw Error('Wait until your actions are synchronized.');const url=URL.createObjectURL(new Blob([JSON.stringify(offlineData())],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='orbis-terrarum.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('export-offline').onclick=$('download-online').onclick=()=>{try{downloadSave();}catch(error){announce(error.message);}};
 $('close-online').onclick=async()=>{if(!confirm(getLanguage()==='de'?'Datei herunterladen und Online-Raum für alle Spieler löschen? Zur Fortsetzung die Datei laden und einen neuen Raum erstellen.':'Download a file and delete the online room for everyone? To resume, load the file and host a new room.'))return;try{downloadSave();await online.send('close');}catch(error){$('connection-status').textContent=error.message;}};
-$('host-file-online').onclick=async()=>{try{if(state.players<2)throw Error('An online game needs at least two players.');const data=offlineData();await online.create({...settings,players:6},localStorage.getItem('orbis-name')||'Host',data);history.replaceState(null,'',online.link);}catch(error){announce(error.message);}};
-$('import-offline').onclick=$('load-start').onclick=()=>$('save-file').click();
+$('host-file-online').onclick=async()=>{if(tutorialSession)return;try{if(state.players<2)throw Error('An online game needs at least two players.');const data=offlineData();await online.create({...settings,players:6},localStorage.getItem('orbis-name')||'Host',data);history.replaceState(null,'',online.link);}catch(error){announce(error.message);}};
+$('import-offline').onclick=$('load-start').onclick=()=>{if(tutorialSession)return;$('save-file').click();};
 $('save-file').onchange=async()=>{try{const file=$('save-file').files[0];if(file){if(file.size>5000000)throw Error('Spielstand ist zu gro\u00df.');loadOffline(JSON.parse(await file.text()));}}catch(error){$('save-status').textContent=error.message;$('setup-status').textContent=error.message;}finally{$('save-file').value='';}};
 function openGuide(){$('guide-content').innerHTML=guideHTML(getLanguage());$('guide').showModal();}
 $('guide-local').onclick=$('guide-online').onclick=openGuide;$('guide-close').onclick=()=>$('guide').close();
@@ -288,7 +288,7 @@ function updateTutorialHUD(){
  $('tutorial-panel').hidden=false;$('tutorial-panel').dataset.step=step.id;$('tutorial-panel').dataset.source=tutorialIds.source;$('tutorial-panel').dataset.target=tutorialIds.target;$('tutorial-panel').dataset.friend=tutorialIds.friend;$('tutorial-panel').dataset.corner=tutorialIds.corner??'';
  setTutorialText('tutorial-progress',`${en?'Step':'Schritt'} ${tutorialSession.index+1} / ${tutorialSession.steps.length}`);setTutorialText('tutorial-title',step.title[language]);setTutorialText('tutorial-text',step.text[language]);
  setTutorialText('tutorial-result',tutorialSession.done&&!step.info?(en?'Completed: action verified.':'Geschafft: Aktion geprüft.'):'');setTutorialText('tutorial-next',tutorialSession.index===tutorialSession.steps.length-1?(en?'Finish tutorial':'Tutorial abschließen'):(en?'Next':'Weiter'));setTutorialText('tutorial-retry',en?'Retry exercise':'Übung neu starten');setTutorialText('tutorial-exit',en?'Exit tutorial':'Tutorial beenden');
- $('tutorial-input').options[0].textContent=en?'PC: Mouse + keyboard':'PC: Maus + Tastatur';$('tutorial-input').value=tutorialSession.mode;$('tutorial-input').disabled=tutorialSession.index>0;$('tutorial-language').value=language;$('host-file-online').hidden=true;$('prepare-new-game').hidden=true;$('save-slots').hidden=true;
+ setTutorialText('tutorial-device',tutorialSession.mode==='pc'?(en?'PC: mouse + keyboard':'PC: Maus + Tastatur'):(en?'Touch: taps + gestures':'Touch: Tippen + Gesten'));$('tutorial-panel').dataset.mode=tutorialSession.mode;$('local-save-controls').hidden=true;$('tutorial-language').value=language;$('host-file-online').hidden=true;$('prepare-new-game').hidden=true;$('save-slots').hidden=true;
  const note=$('local-menu').querySelector('p');if(note)note.textContent=en?'Tutorial practice stays separate from your regular game.':'Das Tutorial bleibt von deinem normalen Spielstand getrennt.';
  document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));if(step.ui)document.querySelector(step.ui)?.classList.add('tutorial-focus');refreshTutorialNext();
 }
@@ -296,17 +296,17 @@ function enterTutorialStep(retry=false){
  const step=tutorialSession.step;
  if(retry&&tutorialRetry){state=structuredClone(tutorialRetry.state);tutorialIds={...tutorialRetry.ids};selected=tutorialRetry.selected;type=tutorialRetry.type;amount=tutorialRetry.amount;tab=tutorialRetry.tab;menuOpen=tutorialRetry.menuOpen;prepareWorld();}
  else if(step.scenario){const fixture=exercise(world,step.scenario);state=fixture.state;tutorialIds=fixture.ids;selected=null;amount=0;type='soldier';tab='move';operation=null;menuOpen=false;prepareWorld();}
- if(step.info)menuOpen=false;operation=null;battles=[];volleys=[];busy=null;$('tutorial-link').hidden=step.id!=='snapshot';
+ if(step.info)menuOpen=false;operation=null;battles=[];volleys=[];busy=null;
  tutorialRetry={state:structuredClone(state),ids:{...tutorialIds},selected,type,amount,tab,menuOpen};tutorialSession.enter(tutorialContext());dirty=true;status='';updateUI();requestRender();
 }
-function startTutorial(mode){
+function startTutorial(pointerType){
  if(!tutorialReturn)tutorialReturn={settings:{...settings},gameMode,saved,roundStarter,nextStarter};cancelAI();online.leave();
- mode=mode||((matchMedia('(pointer:coarse)').matches&&navigator.maxTouchPoints>0)?'touch':'pc');tutorialSession=new TutorialSession(mode);world=tutorialWorld();settings={players:2,provinces:20,rivers:1,mountains:1,lakes:1};gameMode='human';hasGame=true;setup=false;menuOpen=false;enterTutorialStep();
+ const mode=detectTutorialInput(globalThis,pointerType);tutorialSession=new TutorialSession(mode);world=tutorialWorld();settings={players:2,provinces:20,rivers:1,mountains:1,lakes:1};gameMode='human';hasGame=true;setup=false;menuOpen=false;enterTutorialStep();
 }
 function stopTutorial(completed=false){
- if(!tutorialSession)return;if($('guide').open)$('guide').close();const previous=tutorialReturn;tutorialSession=null;tutorialIds=null;tutorialRetry=null;tutorialReturn=null;tutorialSnapshot=null;
+ if(!tutorialSession)return;if($('guide').open)$('guide').close();const previous=tutorialReturn;tutorialSession=null;tutorialIds=null;tutorialRetry=null;tutorialReturn=null;
  if(completed)try{localStorage.setItem('orbis-tutorial-complete-v1',new Date().toISOString());}catch{}
- document.body.classList.remove('tutorial-active');document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));$('tutorial-panel').hidden=true;$('tutorial-link').hidden=true;$('host-file-online').hidden=false;$('prepare-new-game').hidden=false;$('save-slots').hidden=false;
+ document.body.classList.remove('tutorial-active');document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));$('tutorial-panel').hidden=true;$('local-save-controls').hidden=false;$('save-status').textContent='';$('host-file-online').hidden=false;$('prepare-new-game').hidden=false;$('save-slots').hidden=false;
  $('local-menu').querySelector('p').textContent='Deine Partie wird automatisch gespeichert.';settings=previous.settings;gameMode=previous.gameMode;saved=previous.saved;roundStarter=previous.roundStarter;nextStarter=previous.nextStarter;$('game-mode').value=gameMode;setup=true;hasGame=false;menuOpen=false;selected=null;amount=0;operation=null;busy=null;battles=[];volleys=[];updateMode();playerButtons();regenerate();
 }
 function drawTutorialMarks(g){
@@ -318,7 +318,7 @@ function drawTutorialMarks(g){
  if(mark==='corner'&&world.corners[tutorialIds.corner]){const p=world.corners[tutorialIds.corner].point;g.setLineDash([]);g.beginPath();g.arc(p.x*S,p.y*S,11,0,Math.PI*2);g.stroke();}
  g.restore();
 }
-$('tutorial-start').onclick=()=>startTutorial();$('tutorial-next').onclick=()=>{if(!tutorialSession?.done||performance.now()<animationEnd(battles,volleys))return;if(tutorialSession.index===tutorialSession.steps.length-1){stopTutorial(true);return;}tutorialSession.next();enterTutorialStep();};$('tutorial-retry').onclick=()=>enterTutorialStep(true);$('tutorial-exit').onclick=()=>stopTutorial();$('tutorial-input').onchange=()=>startTutorial($('tutorial-input').value);$('tutorial-language').onchange=()=>setLanguage($('tutorial-language').value);
+$('tutorial-start').onclick=e=>startTutorial(e.pointerType);$('tutorial-next').onclick=()=>{if(!tutorialSession?.done||performance.now()<animationEnd(battles,volleys))return;if(tutorialSession.index===tutorialSession.steps.length-1){stopTutorial(true);return;}tutorialSession.next();enterTutorialStep();};$('tutorial-retry').onclick=()=>enterTutorialStep(true);$('tutorial-exit').onclick=()=>stopTutorial();$('tutorial-language').onchange=()=>setLanguage($('tutorial-language').value);
 window.addEventListener('pointerdown',e=>{if(tutorialSession)tutorialInput=e.pointerType==='touch'?'touch':e.button===2?'right':'click';},true);
 window.addEventListener('keydown',e=>{if(tutorialSession&&!e.target.closest?.('input,textarea,select,[contenteditable]'))tutorialInput='key:'+e.key.toLowerCase();},true);
 window.addEventListener('keydown',e=>{if(tutorialSession)queueMicrotask(()=>tutorialObserve({kind:'key',key:e.key.toLowerCase()}));});

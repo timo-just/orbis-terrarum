@@ -7,7 +7,7 @@
   <meta name="description" content="Orbis Terrarum: rundenbasierte Eroberung auf zufälligen Voronoi-Karten. Für ein bis sechs Menschen an einem Bildschirm.">
   <title>Orbis Terrarum</title>
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=tutorial-30">
+  <link rel="stylesheet" href="./style.css?v=tutorial-31">
 </head>
 <body>
   <main id="game" aria-label="Orbis Terrarum">
@@ -19,7 +19,7 @@
     </header>
     <canvas id="map" aria-label="Spielkarte. Mausrad zum Zoomen, ziehen zum Verschieben. Provinzen mit einem Klick auswählen." tabindex="0"></canvas>
     <section id="tutorial-panel" hidden data-no-translate aria-label="Tutorial">
-      <div class="tutorial-copy"><div class="tutorial-meta"><span id="tutorial-progress"></span><select id="tutorial-input" aria-label="Tutorial input"><option value="pc">PC: Mouse + keyboard</option><option value="touch">Touch</option></select><select id="tutorial-language" aria-label="Language"><option value="de">Deutsch</option><option value="en">English</option></select></div><h2 id="tutorial-title"></h2><p id="tutorial-text"></p><strong id="tutorial-result" role="status"></strong><textarea id="tutorial-link" readonly hidden aria-label="Snapshot link"></textarea></div>
+      <div class="tutorial-copy"><div class="tutorial-meta"><span id="tutorial-progress"></span><span id="tutorial-device"></span><select id="tutorial-language" aria-label="Language"><option value="de">Deutsch</option><option value="en">English</option></select></div><h2 id="tutorial-title"></h2><p id="tutorial-text"></p><strong id="tutorial-result" role="status"></strong></div>
       <div class="tutorial-buttons"><button id="tutorial-next" class="primary"></button><button id="tutorial-retry"></button><button id="tutorial-exit"></button></div>
     </section>
     <section id="setup" class="panel setup" aria-label="Neue Partie">
@@ -42,7 +42,7 @@
       <button id="load-start" class="quiet">Spielstand laden</button>
       <p id="setup-status" role="status" class="hint"></p>
     </section>
-    <section id="local-menu" class="panel" hidden aria-label="Spielmenü"><h2>Menü</h2><p>Deine Partie wird automatisch gespeichert.</p><button id="guide-local">Anleitung</button><label for="save-name">Name des Spielstands</label><input id="save-name" maxlength="40" value="Partie"><button id="save-offline">Spielstand speichern</button><button id="share-offline">Spielstand-Link kopieren</button><button id="export-offline">Spielstand herunterladen</button><button id="import-offline">Spielstand laden</button><input id="save-file" type="file" accept="application/json,.json" hidden><div id="save-slots"></div><p id="save-status" class="hint" role="status"></p><button id="host-file-online">Diese Datei online fortsetzen</button><button id="prepare-new-game" class="primary">Neue Partie vorbereiten</button></section>
+    <section id="local-menu" class="panel" hidden aria-label="Spielmenü"><h2>Menü</h2><p>Deine Partie wird automatisch gespeichert.</p><button id="guide-local">Anleitung</button><div id="local-save-controls"><label for="save-name">Name des Spielstands</label><input id="save-name" maxlength="40" value="Partie"><button id="save-offline">Spielstand speichern</button><button id="share-offline">Spielstand-Link kopieren</button><button id="export-offline">Spielstand herunterladen</button><button id="import-offline">Spielstand laden</button><input id="save-file" type="file" accept="application/json,.json" hidden><div id="save-slots"></div><p id="save-status" class="hint" role="status"></p></div><button id="host-file-online">Diese Datei online fortsetzen</button><button id="prepare-new-game" class="primary">Neue Partie vorbereiten</button></section>
     <section id="join-panel" class="panel join-panel" hidden aria-label="Lobby beitreten">
       <h2>Mitspielen</h2><p>Gib deinen Namen ein, bevor du der Lobby beitrittst.</p>
       <label class="language-label" for="join-language">Sprache / Language <select id="join-language"><option value="de">Deutsch</option><option value="en">English</option></select></label>
@@ -88,6 +88,6 @@
     <dialog id="guide"><h2>Anleitung</h2><div id="guide-content"></div><button id="guide-close">Schließen</button></dialog>
     <noscript>Für Orbis Terrarum muss JavaScript aktiviert sein.</noscript>
   </main>
-  <script type="module" src="./app.mjs?v=tutorial-30"></script>
+  <script type="module" src="./app.mjs?v=tutorial-31"></script>
 </body>
 </html>
