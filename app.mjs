@@ -1,21 +1,21 @@
-import {TutorialSession,tutorialWorld,exercise,tutorialOpponentTurn,detectTutorialInput} from './tutorial.mjs?v=tutorial-32';
-import {preferredUnit,unitEnabled,provinceCount,factionName,animationEnd,groupBadges} from './presentation.mjs?v=tutorial-32';
-import {makeVolley,drawVolleys} from './volleys.mjs?v=tutorial-32';
-import {drawRivers} from './rivers.mjs?v=tutorial-32';
-import {drawFlag,flagPosition} from './flags.mjs?v=tutorial-32';
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=tutorial-32';
-import {drawOrnateFrame} from './frame.mjs?v=tutorial-32';
-import {drawParchment} from './parchment.mjs?v=tutorial-32';
-import {drawMountain} from './mountains.mjs?v=tutorial-32';
-import {drawUnit as unit} from './units.mjs?v=tutorial-32';
-import {drawBarracks} from './barracks.mjs?v=tutorial-32';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=tutorial-32';
-import {guideHTML} from './guide.mjs?v=tutorial-32';
-import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=tutorial-32';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=tutorial-32';
-import {OnlineGame} from './online.mjs?v=tutorial-32';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner,cavalryVia} from './engine.mjs?v=tutorial-32';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=tutorial-32';
+import {TutorialSession,tutorialWorld,exercise,tutorialOpponentTurn,detectTutorialInput} from './tutorial.mjs?v=tutorial-33';
+import {preferredUnit,unitEnabled,provinceCount,factionName,animationEnd,groupBadges} from './presentation.mjs?v=tutorial-33';
+import {makeVolley,drawVolleys} from './volleys.mjs?v=tutorial-33';
+import {drawRivers} from './rivers.mjs?v=tutorial-33';
+import {drawFlag,flagPosition} from './flags.mjs?v=tutorial-33';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=tutorial-33';
+import {drawOrnateFrame} from './frame.mjs?v=tutorial-33';
+import {drawParchment} from './parchment.mjs?v=tutorial-33';
+import {drawMountain} from './mountains.mjs?v=tutorial-33';
+import {drawUnit as unit} from './units.mjs?v=tutorial-33';
+import {drawBarracks} from './barracks.mjs?v=tutorial-33';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=tutorial-33';
+import {guideHTML} from './guide.mjs?v=tutorial-33';
+import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=tutorial-33';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=tutorial-33';
+import {OnlineGame} from './online.mjs?v=tutorial-33';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner,cavalryVia} from './engine.mjs?v=tutorial-33';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=tutorial-33';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -187,7 +187,7 @@ window.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('guide').open){$
   const choice=buttons[index];if(choice&&!choice.disabled){e.preventDefault();choice.click();}
 });window.addEventListener('resize',()=>{fitCamera=true;resize();});
 $('units-tab').onclick=()=>{tab='move';operation=null;dirty=true;updateUI();requestRender();};$('build-tab').onclick=()=>{tab='build';updateUI();};$('trade-tab').onclick=()=>{tab='trade';updateUI();};
-$('amount').oninput=()=>{amount=Number($('amount').value);updateUI();requestRender();};$('less').onclick=()=>{amount=Math.max(0,amount-1);updateUI();requestRender();};$('more').onclick=()=>{if(selected!==null)amount=Math.min(available(state.p[selected],type),amount+1);updateUI();requestRender();};$('all').onclick=()=>{if(selected!==null)amount=available(state.p[selected],type);updateUI();requestRender();};
+$('amount').oninput=()=>{amount=Number($('amount').value);updateUI();requestRender();};$('less').onclick=()=>{const previousAmount=amount;amount=Math.max(0,amount-1);tutorialObserve({kind:'control',id:'less',previousAmount});updateUI();requestRender();};$('more').onclick=()=>{if(selected!==null)amount=Math.min(available(state.p[selected],type),amount+1);updateUI();requestRender();};$('all').onclick=()=>{if(selected!==null)amount=available(state.p[selected],type);updateUI();requestRender();};
 $('end-turn').onclick=()=>commit({kind:'pass'});$('undo').onclick=()=>commit({kind:'undo',player:online.room?online.color:undoOwner(state)});
 function toggleMenu(){if(!hasGame)return;renderSaveSlots();menuOpen=!menuOpen;if(online.snapshot&&menuOpen)receiveOnline(online.snapshot);updateUI();requestRender();}
 $('menu').onclick=()=>{toggleMenu();if(!menuOpen)scheduleAI();};
