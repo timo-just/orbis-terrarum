@@ -1,4 +1,4 @@
-import {inside} from './world.mjs?v=ai-26';
+import {inside} from './world.mjs?v=ui-27';
 // Selected F2: hanging courtyard banner, gold border and light diamond.
 export function drawFlag(g,x,y,color){
  g.save();g.translate(x,y);g.lineJoin='round';g.lineCap='round';

@@ -119,3 +119,5 @@ noscript{position:absolute;padding:20px;background:white;color:#222}
  #topbar:is([data-players="5"],[data-players="6"]) #hud{grid-column:1/-1;grid-row:2}
  #topbar:is([data-players="5"],[data-players="6"]) #connection{grid-row:3}
 }
+
+.faction-name{overflow:hidden;text-overflow:ellipsis}#unit-types button:disabled{filter:grayscale(1);background:#52616a;color:#b8c0c5;opacity:.5}
