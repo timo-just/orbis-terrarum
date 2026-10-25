@@ -1,4 +1,4 @@
-import {segmentDistance} from './world.mjs?v=ui-27';
+import {segmentDistance} from './world.mjs?v=vector-28';
 export function makeBattle(action,before,after,world,now=performance.now()){
  const edge=world.edges.find(e=>e.provinces.includes(action.source)&&e.provinces.includes(action.target));if(!edge)return null;
  const from=world.provinces[action.source].home,to=world.provinces[action.target].home,mid={x:(edge.a.x+edge.b.x)/2,y:(edge.a.y+edge.b.y)/2},d=Math.hypot(to.x-from.x,to.y-from.y)||1,axis={x:(to.x-from.x)/d,y:(to.y-from.y)/d};

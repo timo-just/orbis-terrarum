@@ -1,20 +1,20 @@
-import {preferredUnit,unitEnabled,provinceCount,factionName,animationEnd} from './presentation.mjs?v=ui-27';
-import {makeVolley,drawVolleys} from './volleys.mjs?v=ui-27';
-import {drawRivers} from './rivers.mjs?v=ui-27';
-import {drawFlag,flagPosition} from './flags.mjs?v=ui-27';
-import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=ui-27';
-import {drawOrnateFrame} from './frame.mjs?v=ui-27';
-import {drawParchment} from './parchment.mjs?v=ui-27';
-import {drawMountain} from './mountains.mjs?v=ui-27';
-import {drawUnit as unit} from './units.mjs?v=ui-27';
-import {drawBarracks} from './barracks.mjs?v=ui-27';
-import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=ui-27';
-import {guideHTML} from './guide.mjs?v=ui-27';
-import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=ui-27';
-import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=ui-27';
-import {OnlineGame} from './online.mjs?v=ui-27';
-import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=ui-27';
-import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=ui-27';
+import {preferredUnit,unitEnabled,provinceCount,factionName,animationEnd} from './presentation.mjs?v=vector-28';
+import {makeVolley,drawVolleys} from './volleys.mjs?v=vector-28';
+import {drawRivers} from './rivers.mjs?v=vector-28';
+import {drawFlag,flagPosition} from './flags.mjs?v=vector-28';
+import {towerAnchor,wallRoute,drawJoinedWall,drawTower} from './fortifications.mjs?v=vector-28';
+import {drawOrnateFrame} from './frame.mjs?v=vector-28';
+import {drawParchment} from './parchment.mjs?v=vector-28';
+import {drawMountain} from './mountains.mjs?v=vector-28';
+import {drawUnit as unit} from './units.mjs?v=vector-28';
+import {drawBarracks} from './barracks.mjs?v=vector-28';
+import {getLanguage,setLanguage,applyTranslations,translate} from './i18n.mjs?v=vector-28';
+import {guideHTML} from './guide.mjs?v=vector-28';
+import {snapshotLink,readSnapshot,validateSave,listSaves,deleteSave} from './offline.mjs?v=vector-28';
+import {makeBattle,drawBattles,displayOwners} from './combat.mjs?v=vector-28';
+import {OnlineGame} from './online.mjs?v=vector-28';
+import {TYPES,COLORS,NAMES,createState,chooseStart,legal,apply,winner,active,available,total,shade,undoOwner} from './engine.mjs?v=vector-28';
+import {generateWorld,inside,dist2,segmentDistance,center,rng} from './world.mjs?v=vector-28';
 
 const $=id=>document.getElementById(id), canvas=$('map'),ctx=canvas.getContext('2d'),scene=document.createElement('canvas');
 scene.width=scene.height=1400;const g=scene.getContext('2d'),S=1400;
@@ -67,12 +67,9 @@ function symbolPositions(id,counts,structures){const cache=JSON.stringify([id,co
   });if(layouts.size>500)layouts.clear();layouts.set(cache,out);return out;
 }
 function displayCounts(id){const p=state.p[id],counts=Object.fromEntries(TYPES.map(t=>[t,p[t]]));for(const t of TYPES){let hidden=0;for(const b of battles)if(b.action.target===id)hidden=Math.max(hidden,b.hidden[t]);counts[t]=Math.max(0,counts[t]-hidden);}return counts;}
-function drawScene(){g.clearRect(0,0,S,S);const owners=displayOwners(state,battles),nextTerrainKey=world.seed+':'+owners.join(',');if(terrainKey===nextTerrainKey){g.drawImage(terrain,0,0);}else{world.provinces.forEach((p,id)=>{
-    const path=paths.get(id);g.fillStyle=COLORS[owners[id]];g.fill(path);g.strokeStyle='#fafcfde8';g.lineWidth=1.5;g.stroke(path);
-  });
+function drawScene(){g.clearRect(0,0,S,S);const nextTerrainKey=world.seed;if(terrainKey===nextTerrainKey){g.drawImage(terrain,0,0);}else{
   // Lakes are whole water cells. Paint together, outline only the actual shore.
   drawLakes(g);
-  world.coast.forEach(e=>{drawLine(g,e.a,e.b,5,'#d4d2a6');drawLine(g,e.a,e.b,1.7,'#eff5db');});
   g.save();const landClip=new Path2D();paths.forEach(path=>landClip.addPath(path));g.clip(landClip);
   world.edges.forEach(e=>{if(e.river){}else if(e.mountain){
     drawMountain(g,e,paths,S);
@@ -81,7 +78,7 @@ function drawScene(){g.clearRect(0,0,S,S);const owners=displayOwners(state,battl
   g.save();const riverClip=new Path2D();paths.forEach(path=>riverClip.addPath(path));g.clip(riverClip);drawRivers(g,world.edges,S);g.restore();
   terrainContext.clearRect(0,0,S,S);terrainContext.drawImage(scene,0,0);terrainKey=nextTerrainKey;}
 }
-function drawPieces(g){if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.shadow);g.fillStyle='#357747';g.fill(vegetation.leaves);g.fillStyle='#50894a';g.fill(vegetation.mid);g.fillStyle='#77a55d';g.fill(vegetation.light);g.strokeStyle='#b7ce9670';g.lineWidth=.8;g.stroke(vegetation.grass);}g.save();const clip=new Path2D();paths.forEach(path=>clip.addPath(path));g.clip(clip);g.restore();g.strokeStyle='#f6fbf0';g.lineWidth=1.1;paths.forEach(path=>g.stroke(path));g.save();const riverClip=new Path2D();paths.forEach(path=>riverClip.addPath(path));g.clip(riverClip);drawRivers(g,world.edges,S);g.restore();
+function drawPieces(g){world.coast.forEach(e=>{drawLine(g,e.a,e.b,5,'#d4d2a6');drawLine(g,e.a,e.b,1.7,'#eff5db');});if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.shadow);g.fillStyle='#357747';g.fill(vegetation.leaves);g.fillStyle='#50894a';g.fill(vegetation.mid);g.fillStyle='#77a55d';g.fill(vegetation.light);g.strokeStyle='#b7ce9670';g.lineWidth=.9;g.lineCap='round';g.lineJoin='round';g.stroke(vegetation.grass);}g.save();const clip=new Path2D();paths.forEach(path=>clip.addPath(path));g.clip(clip);g.restore();g.strokeStyle='#f6fbf0';g.lineWidth=1.1;paths.forEach(path=>g.stroke(path));g.save();const riverClip=new Path2D();paths.forEach(path=>riverClip.addPath(path));g.clip(riverClip);drawRivers(g,world.edges,S);g.restore();
   state.walls.forEach(key=>{const [a,b]=key.split(':').map(Number),edge=edgeFor(a,b);if(!edge)return;g.save();g.clip(paths.get(a));drawJoinedWall(g,joinedWall(edge,a),COLORS[state.p[a].owner],S);g.restore();});
   if(selected!==null){g.strokeStyle='#fff';g.lineWidth=4;g.stroke(paths.get(selected));}
   const obstacles=state.p.map(()=>[]);
@@ -94,7 +91,7 @@ function drawPieces(g){if(vegetation){g.fillStyle='#244f3980';g.fill(vegetation.
 function render(time){framePending=false;ctx.setTransform(DPR,0,0,DPR,-viewport.left*DPR,-viewport.top*DPR);ctx.clearRect(viewport.left,viewport.top,W,H);drawOcean(ctx);
   if(!world||!state)return;const previousBattleCount=battles.length;battles=battles.filter(b=>time-b.start<b.duration);if(battles.length!==previousBattleCount)dirty=true;volleys=volleys.filter(v=>time-v.start<v.duration);if(battles.length||volleys.length)requestRender();scheduleAI();if(busy){busy.progress=Math.min(1,(time-busy.start)/busy.duration);if(busy.progress>=1){busy=null;dirty=true;}else if(busy.kind==='volley')dirty=true;}
   if(dirty){drawScene();dirty=false;}
-  ctx.save();const sheet=paperRect();ctx.beginPath();ctx.rect(sheet.x+15*zoom,sheet.y+15*zoom,sheet.w-30*zoom,sheet.h-30*zoom);ctx.clip();ctx.save();ctx.translate(mapCenter.x+pan.x,mapCenter.y+pan.y);ctx.scale(mapSize*zoom/S,mapSize*zoom/S);ctx.drawImage(scene,-mapOrigin.x*S,-mapOrigin.y*S);ctx.translate(-mapOrigin.x*S,-mapOrigin.y*S);drawPieces(ctx);drawBattles(ctx,battles,time,COLORS,unit,piecePositions,S);drawVolleys(ctx,volleys,time,COLORS,unit,S);ctx.restore();
+  ctx.save();const sheet=paperRect();ctx.beginPath();ctx.rect(sheet.x+15*zoom,sheet.y+15*zoom,sheet.w-30*zoom,sheet.h-30*zoom);ctx.clip();ctx.save();ctx.translate(mapCenter.x+pan.x,mapCenter.y+pan.y);ctx.scale(mapSize*zoom/S,mapSize*zoom/S);ctx.translate(-mapOrigin.x*S,-mapOrigin.y*S);const owners=displayOwners(state,battles);world.provinces.forEach((p,id)=>{ctx.fillStyle=COLORS[owners[id]];ctx.fill(paths.get(id));});ctx.drawImage(scene,0,0);drawPieces(ctx);drawBattles(ctx,battles,time,COLORS,unit,piecePositions,S);drawVolleys(ctx,volleys,time,COLORS,unit,S);ctx.restore();
   ctx.restore();drawFrame(ctx);
 }
 function targets(){if(selected===null||!operation)return [];const kind=operation==='buildWall'?'wall':operation==='demolishWall'?'demolishWall':operation==='buildTower'?'tower':'demolishTower';return (kind.includes('ower')?world.corners.map((_,i)=>i):state.links[selected].map(l=>l.target)).filter(target=>legal(state,{kind,source:selected,target}));}

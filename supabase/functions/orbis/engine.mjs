@@ -53,6 +53,7 @@ export function legal(s,a) {
 function budget(p,t){return t==='horse'?[p.horseOnce,p.horseExhausted]:t==='soldier'?[p.arrived-p.soldierTwice,p.soldierTwice]:[p.archerArrived-p.archerTwice,p.archerTwice];}
 function setBudget(p,t,one,two){if(t==='horse'){p.horseOnce=one;p.horseExhausted=two;}else if(t==='soldier'){p.arrived=one+two;p.soldierTwice=two;}else{p.archerArrived=one+two;p.archerTwice=two;}}
 function remove(p,t,n,moving=false){const [one,two]=budget(p,t), spentTwo=moving?0:Math.min(n,two),spentOne=moving&&t!=='horse'?0:Math.min(n-spentTwo,one);setBudget(p,t,one-spentOne,two-spentTwo);p[t]-=n;return [spentOne,spentTwo];}
+function removeFresh(p,t,n){const [one,two]=budget(p,t),fresh=p[t]-one-two,used=Math.max(0,n-fresh),usedOne=Math.min(used,one),usedTwo=used-usedOne;setBudget(p,t,one-usedOne,two-usedTwo);p[t]-=n;return [usedOne,usedTwo];}
 function add(p,t,n,one=0,two=0){const b=budget(p,t);p[t]+=n;setBudget(p,t,b[0]+one,b[1]+two);}
 function spend(p,n){p.soldier-=n;p.arrived=Math.min(p.arrived,p.soldier);p.soldierTwice=Math.min(p.soldierTwice,p.arrived);}
 export function shots(s,player) {
@@ -80,7 +81,7 @@ function applyRaw(s,a) {
   }
   if(a.kind==='convert'){
     const [from,to,cost,produced]=({horse:['soldier','horse',3,1],archer:['soldier','archer',5,1],footHorse:['horse','soldier',1,2],footArcher:['archer','soldier',1,3]})[a.conversion];
-    const b=remove(p,from,cost);add(p,to,produced,b[1]===0&&b[0]>0?produced:0,b[1]>0?produced:0);return n;
+    const b=from==='soldier'?removeFresh(p,from,cost):remove(p,from,cost);add(p,to,produced,b[1]===0&&b[0]>0?produced:0,b[1]>0?produced:0);return n;
   }
   if(a.kind==='demolishBarracks'){p.barracks=false;add(p,'soldier',5,0,5);return n;}
   if(a.kind==='barracks'){spend(p,10);p.barracks=true;return n;}

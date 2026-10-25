@@ -1,6 +1,6 @@
 import * as serverConfig from './online-config.mjs';
-import {RevisionChannel} from './sync.mjs?v=ui-27';
-import {apply,chooseStart,undoOwner} from './engine.mjs?v=ui-27';
+import {RevisionChannel} from './sync.mjs?v=vector-28';
+import {apply,chooseStart,undoOwner} from './engine.mjs?v=vector-28';
 const advance=(state,action)=>action.kind==='draft'?chooseStart(state,action.source):apply(state,action);
 export class OnlineGame {
   constructor(onUpdate,onError,configuration=serverConfig){this.defaultURL=configuration.ONLINE_URL;this.apiURL=this.defaultURL;this.legacyURL=configuration.LEGACY_ONLINE_URL;this.onUpdate=onUpdate;this.onError=onError;this.room=null;this.snapshot=null;this.confirmed=null;this.sending=false;this.timer=null;this.pending=[];this.batch=null;this.flushTimer=null;this.flushing=false;this.retryDelay=500;this.epoch=0;}
@@ -66,7 +66,7 @@ export class OnlineGame {
   notify(revision){if(this.closed||revision<=this.confirmed?.revision)return;this.notifiedRevision=Math.max(this.notifiedRevision||0,revision);if(this.notifyTimer)return;const epoch=this.epoch;this.notifyTimer=setTimeout(async()=>{this.notifyTimer=null;if(this.epoch!==epoch)return;if(this.polling||this.flushing){this.notify(this.notifiedRevision);return;}this.notifiedRevision=0;await this.poll();},120);}
   pollDelay(){return this.channel?.ready?60000:globalThis.document?.hidden?30000:5000;}
   watch(){clearTimeout(this.timer);this.channel?.close();const epoch=this.epoch,config=this.confirmed?.sync;
-    if(config?.type==='orbis-ws')import('./cloudflare-channel.mjs?v=ui-27').then(({CloudflareChannel})=>{if(this.epoch!==epoch)return;this.channel=new CloudflareChannel(config,this.room,this.token(this.room),()=>this.confirmed?.revision??0,data=>{if(this.epoch===epoch)this.receive(data);},()=>this.poll());}).catch(error=>this.onError(error.message));
+    if(config?.type==='orbis-ws')import('./cloudflare-channel.mjs?v=vector-28').then(({CloudflareChannel})=>{if(this.epoch!==epoch)return;this.channel=new CloudflareChannel(config,this.room,this.token(this.room),()=>this.confirmed?.revision??0,data=>{if(this.epoch===epoch)this.receive(data);},()=>this.poll());}).catch(error=>this.onError(error.message));
     else if(config?.url&&config?.key)this.channel=new RevisionChannel(config,this.room,revision=>this.notify(revision),()=>this.poll());
     this.wake=()=>{if(!globalThis.document?.hidden)this.poll();};globalThis.document?.addEventListener('visibilitychange',this.wake);globalThis.addEventListener?.('online',this.wake);
     const tick=async()=>{await this.poll();if(this.room&&!this.closed&&this.epoch===epoch)this.timer=setTimeout(tick,this.pollDelay());};this.timer=setTimeout(tick,this.pollDelay());
